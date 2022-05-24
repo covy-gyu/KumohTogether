@@ -30,3 +30,9 @@ export interface IOfficeState extends Schema {
   whiteboards: MapSchema<IWhiteboard>
   chatMessages: ArraySchema<IChatMessage>
 }
+
+export interface ILobbyState extends Schema{
+  id: string
+  password: string
+  result: boolean
+}
