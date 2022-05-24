@@ -1,5 +1,5 @@
 export interface IUser {
-    ID: string
+    id: string
     password: string
     // description: string
     // autoDispose: boolean
