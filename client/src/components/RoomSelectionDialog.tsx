@@ -3,26 +3,15 @@ import logo from '../assets/logo.png'
 import styled from 'styled-components'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
-import LinearProgress from '@mui/material/LinearProgress'
 import Alert from '@mui/material/Alert'
 import Snackbar from '@mui/material/Snackbar'
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-
-import { CustomRoomTable } from './CustomRoomTable'
-import { CreateRoomForm } from './CreateRoomForm'
 import { useAppSelector } from '../hooks'
 
 import phaserGame from '../PhaserGame'
 import Bootstrap from '../scenes/Bootstrap'
-import { TextField } from '@mui/material'
-
-import Colyseus from 'colyseus.js'
-import Network from '../services/Network'
+import { InputAdornment, TextField } from '@mui/material'
 import { IUser } from '../../../types/Users'
-
-
+import { Visibility, VisibilityOff } from '@mui/icons-material'
 
 const Backdrop = styled.div`
   position: absolute;
@@ -40,19 +29,6 @@ const Wrapper = styled.form`
   border-radius: 16px;
   padding: 36px 60px;
   box-shadow: 0px 0px 5px #0000006f;
-`
-
-const CustomRoomWrapper = styled.div`
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  align-items: center;
-  justify-content: center;
-
-  .tip {
-    font-size: 18px;
-  }
 `
 
 const BackButtonWrapper = styled.div`
@@ -81,72 +57,46 @@ const Content = styled.div`
   }
 `
 
-const ProgressBarWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  h3 {
-    color: #33ac96;
-  }
-`
-
-const ProgressBar = styled(LinearProgress)`
-  width: 360px;
-`
-
 export default function RoomSelectionDialog() {
-  const [showCustomRoom, setShowCustomRoom] = useState(false)
-  const [showCreateRoomForm, setShowCreateRoomForm] = useState(false)
   const [showSnackbar, setShowSnackbar] = useState(false)
   const lobbyJoined = useAppSelector((state) => state.room.lobbyJoined)
-
-  const [id, setId] = useState<string>('')
   const [idFieldEmpty, setIdFieldEmpty] = useState<boolean>(false)
-  const [pw, setPw] = useState<string>('')
   const [pwFieldEmpty, setPwFieldEmpty] = useState<boolean>(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const [loginResult, setLoginFail] = useState<boolean>(false)
 
-  let user: IUser
+  const [values, setValues] = useState<IUser>({
+    id: '',
+    password: '',
+    result: false,
+  })
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleChange = (prop: keyof IUser) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValues({ ...values, [prop]: event.target.value })
+  }
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (id === '') {
-      setIdFieldEmpty(true)
-    }
-    else if(pw===''){
-      setPwFieldEmpty(true)
-    }
+    const isValidId = values.id !== ''
+    const isValidPassword = values.password !== ''
 
-    
+    if (isValidId === idFieldEmpty) setIdFieldEmpty(!idFieldEmpty)
+    if (isValidPassword === pwFieldEmpty)
+      setPwFieldEmpty(!pwFieldEmpty)
 
-    else if (lobbyJoined) {
-
-      user.ID=id
-      user.password=pw
-
-      
-      const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
-      
-      const checkLogin = bootstrap.network.checkLogin(user)
-      
-      if (checkLogin) {
-        bootstrap.network
-          .joinOrCreatePublic()
-          .then(() => bootstrap.launchGame())
-          .catch((error) => console.error(error))
-      } else {
-        setShowSnackbar(true)
+      if (isValidId && isValidPassword && lobbyJoined) {
+        const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
+        const tryLogin = bootstrap.network.tryLogin(values)
+        if (await tryLogin ===true) {
+          bootstrap.network
+            .joinOrCreatePublic()
+            .then(() => bootstrap.launchGame())
+            .catch((error) => console.error(error))
+        } else {
+          setShowSnackbar(true)
+        }
       }
-    }
-    if (id !== '') {
-      setIdFieldEmpty(false)
-    }
-    else if(pw !==''){
-      setPwFieldEmpty(false)
-    }
-
   }
   return (
     <>
@@ -169,93 +119,48 @@ export default function RoomSelectionDialog() {
       </Snackbar>
       <Backdrop >
         <Wrapper onSubmit={handleSubmit}>
-          {/* {showCreateRoomForm ? (
-            <CustomRoomWrapper>
-              <Title>Create Custom Room</Title>
-              <BackButtonWrapper>
-                <IconButton onClick={() => setShowCreateRoomForm(false)}>
-                  <ArrowBackIcon />
-                </IconButton>
-              </BackButtonWrapper>
-              <CreateRoomForm />
-            </CustomRoomWrapper>
-          ) : showCustomRoom ? (
-            <CustomRoomWrapper>
-              <Title>
-                Custom Rooms
-                <Tooltip
-                  title="We update the results in realtime, no refresh needed!"
-                  placement="top"
-                >
-                  <IconButton>
-                    <HelpOutlineIcon className="tip" />
-                  </IconButton>
-                </Tooltip>
-              </Title>
-              <BackButtonWrapper>
-                <IconButton onClick={() => setShowCustomRoom(false)}>
-                  <ArrowBackIcon />
-                </IconButton>
-              </BackButtonWrapper>
-              <CustomRoomTable />
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => setShowCreateRoomForm(true)}
-              >
-                Create new room
-              </Button>
-            </CustomRoomWrapper>
-          ) : ( */}
-            {/* <> */}
-              <Title>Welcome to KumohTogether</Title>
-              <Content onSubmit={handleSubmit}>
-                <img src={logo} alt="logo" />
-                  <TextField
-                    autoFocus
-                    fullWidth
-                    label="id"
-                    variant="outlined"
-                    color="secondary"
-                    error={idFieldEmpty}
-                    helperText={idFieldEmpty && 'ID가 필요합니다.'}
-                    onInput={(e) => {
-                      setId((e.target as HTMLInputElement).value)
-                    }}
-                  />
-                  <TextField
-                    autoFocus
-                    fullWidth
-                    label="password"
-                    variant="outlined"
-                    color="secondary"
-                    error={pwFieldEmpty}
-                    helperText={pwFieldEmpty && '비밀번호가 필요합니다.'}
-                    onInput={(e) => {
-                      setPw((e.target as HTMLInputElement).value)
-                    }}
-                  />       
-                <Button variant="contained" color="secondary" type="submit">
-                  LogIn
-                </Button>
-                {/* <Button
-                  variant="outlined"
-                  color="secondary"
-                  onClick={() => (lobbyJoined ? setShowCustomRoom(true) : setShowSnackbar(true))}
-                >
-                  Create/find custom rooms
-                </Button> */}
-              </Content>
-            {/* </> */}
-          {/* )} */}
+          <Title>Welcome to KumohTogether</Title>
+          <Content onSubmit={handleSubmit}>
+            <img src={logo} alt="logo" />
+            <TextField
+              autoFocus
+              fullWidth
+              label="id"
+              variant="outlined"
+              color="secondary"
+              error={idFieldEmpty}
+              helperText={idFieldEmpty && 'ID가 필요합니다.'}
+              onChange={handleChange('id')}
+            />
+            <TextField
+              type={showPassword ? 'text' : 'password'}
+              autoFocus
+              fullWidth
+              label="password"
+              variant="outlined"
+              color="secondary"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              error={pwFieldEmpty}
+              helperText={pwFieldEmpty && '비밀번호가 필요합니다.'}
+              onChange={handleChange('password')}
+            />
+            <Button variant="contained" color="secondary" type="submit">
+              LogIn
+            </Button>
+          </Content>
         </Wrapper>
-        {/* {!lobbyJoined && (
-          <ProgressBarWrapper>
-            <h3> Connecting to server...</h3>
-            <ProgressBar color="secondary" />
-          </ProgressBarWrapper>
-        )} */}
-
       </Backdrop>
     </>
   )
