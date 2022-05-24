@@ -8,7 +8,7 @@ import { Login } from '../../../types/Login'
 import WebRTC from '../web/WebRTC'
 import { phaserEvents, Event } from '../events/EventCenter'
 import store from '../stores'
-import { setSessionId, setPlayerNameMap, removePlayerNameMap } from '../stores/UserStore'
+import { setSessionId, setPlayerNameMap, removePlayerNameMap, setLoginInfoMap } from '../stores/UserStore'
 import {
   setLobbyJoined,
   setJoinedRoomData,
@@ -95,7 +95,7 @@ export default class Network {
   async checkLogin(userData: IUser) {
     const { id, password } = userData
     this.lobby.onMessage(Message.TRY_TO_LOGIN,({id,password})=>{
-      store.dispatch(tryLogin({ id, password }))
+      store.dispatch(setLoginInfoMap({ id, password }))
     })
   }
 
