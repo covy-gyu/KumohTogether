@@ -92,26 +92,6 @@ export default class Network {
   }
 
   // 로그인 정보 db조회를 위해 서버로 메시지 전송
-  async checkLogin(loginData: Login ){
-    const { ID, password } = loginData 
-    this.lobby.onMessage(Message.TRY_TO_LOGIN, (loginData) => {
-      store.dispatch(tryLogin({ ID, password }))
-    })
-    // this.lobby.onMessage(Message.TRY_TO_LOGIN, (client, message: { content: string }) => {
-    //   // update the message array (so that players join later can also see the message)
-    //   // this.dispatcher.dispatch(new ChatMessageUpdateCommand(), {
-    //   //   client,
-    //   //   content: message.content,
-    //   // })
-
-    //   // broadcast to all currently connected clients except the sender (to render in-game dialog on top of the character)
-    //   // this.broadcast(
-    //   //   Message.ADD_CHAT_MESSAGE,
-    //   //   { clientId: client.sessionId, content: message.content },
-    //   //   { except: client }
-    //   // )
-    // })
-  }
 
 
 
