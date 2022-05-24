@@ -63,9 +63,6 @@ export default function RoomSelectionDialog() {
   const [idFieldEmpty, setIdFieldEmpty] = useState<boolean>(false)
   const [pwFieldEmpty, setPwFieldEmpty] = useState<boolean>(false)
   const [showPassword, setShowPassword] = useState(false)
-
-  const [loginResult, setLoginFail] = useState<boolean>(false)
-
   const [values, setValues] = useState<IUser>({
     id: '',
     password: '',
