@@ -91,11 +91,12 @@ export default class Network {
   }
 
   // 로그인 정보 db조회를 위해 서버로 메시지 전송
-  async checkLogin(userData: IUser) {
+  async tryLogin(userData: IUser) {
     const { id, password } = userData
     this.lobby.onMessage(Message.TRY_TO_LOGIN,({id,password})=>{
       store.dispatch(setLoginInfoMap({ id, password }))
-    })
+    })  
+    return userData.result
   }
 
 
