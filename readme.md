@@ -1,15 +1,6 @@
+# KumohTogether
+# was created based on
 # SkyOffice ![License](https://img.shields.io/badge/license-MIT-blue) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg)
-
-<img alt="Logo" align="right" src="https://user-images.githubusercontent.com/11501902/139942585-a6b044ce-3695-460a-91bd-dd9f1d4611c8.png" width="20%" />
-
-An immersive virtual office - Winner of [2021 Monte Jade Innovation Competition](http://www.montejadese.org/pages/mjic.html)
-
-- Come try it out - [Official Website](https://sky-office.co/)
-- Why we built this - [Concept Video](https://www.youtube.com/watch?v=BpDqGTPh8pc)
-- 🙌 Get latest updates? Follow our [Twitter](https://twitter.com/SkyOfficeApp).
-- 💕 Love this project? Consider [buy me a coffee](https://www.buymeacoffee.com/skyoffice).
-
-SkyOffice works on all PC browsers (mobile browsers are currently not supported)
 
 ## Built with
 
@@ -101,5 +92,3 @@ Big thanks to pixel artist - [LimeZu](https://limezu.itch.io/)
 ## License
 
 This project is licensed under MIT.
-
-If you're using SkyOffice to power your virtual office or using our code in other projects, please consider [buy me a coffee](https://www.buymeacoffee.com/skyoffice). Thank you :)
