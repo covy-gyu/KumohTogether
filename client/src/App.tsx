@@ -3,7 +3,7 @@ import styled from 'styled-components'
 
 import { useAppSelector } from './hooks'
 
-import RoomSelectionDialog from './components/RoomSelectionDialog'
+import LoginLobbyDialog from './components/LoginLobbyDialog'
 import LoginDialog from './components/LoginDialog'
 import ComputerDialog from './components/ComputerDialog'
 import WhiteboardDialog from './components/WhiteboardDialog'
@@ -46,8 +46,8 @@ function App() {
     /* Render LoginDialog if not logged in but selected a room. */
     ui = <LoginDialog />
   } else {
-    /* Render RoomSelectionDialog if yet selected a room. */
-    ui = <RoomSelectionDialog />
+    /* Render LoginLobbyDialog if yet selected a room. */
+    ui = <LoginLobbyDialog />
   }
 
   return (
