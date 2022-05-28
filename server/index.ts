@@ -23,7 +23,7 @@ const gameServer = new Server({
 })
 
 // register room handlers
-gameServer.define(RoomType.LOGIN, Lobby, {
+gameServer.define(RoomType.LOBBY, Lobby, {
   id: '',
   password: '',
   result: false,
