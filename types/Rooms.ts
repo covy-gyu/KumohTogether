@@ -1,4 +1,5 @@
 export enum RoomType {
+  LOGIN = 'login',
   LOBBY = 'lobby',
   PUBLIC = 'sqaure',
   CUSTOM = 'custom',
