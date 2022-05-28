@@ -57,7 +57,7 @@ const Content = styled.div`
   }
 `
 
-export default function RoomSelectionDialog() {
+export default function LoginLobbyDialog() {
   const [showSnackbar, setShowSnackbar] = useState(false)
   const lobbyJoined = useAppSelector((state) => state.room.lobbyJoined)
   const [idFieldEmpty, setIdFieldEmpty] = useState<boolean>(false)
