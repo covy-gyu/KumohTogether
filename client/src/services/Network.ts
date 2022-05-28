@@ -8,7 +8,12 @@ import { IUser } from '../../../types/Users'
 import WebRTC from '../web/WebRTC'
 import { phaserEvents, Event } from '../events/EventCenter'
 import store from '../stores'
-import { setSessionId, setPlayerNameMap, removePlayerNameMap, setLoginInfoMap } from '../stores/UserStore'
+import {
+  setSessionId,
+  setPlayerNameMap,
+  removePlayerNameMap,
+  setLoggedSuccess,
+} from '../stores/UserStore'
 import {
   setLobbyJoined,
   setJoinedRoomData,
@@ -52,7 +57,7 @@ export default class Network {
    * connected clients whenever rooms with "realtime listing" have updates
    */
   async joinLobbyRoom() {
-    this.lobby = await this.client.joinOrCreate(RoomType.LOGIN)
+    this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
 
     this.lobby.onMessage('rooms', (rooms) => {
       store.dispatch(setAvailableRooms(rooms))
@@ -92,32 +97,26 @@ export default class Network {
   }
 
   // 로그인 정보 db조회를 위해 서버로 메시지 전송
-  async tryLogin(loginData: IUser) {
+  async tryLogin(loginData: IUser, callback:(loginSuccess:boolean)=>void) {
     const { id, password, result, msg, code } = loginData
-    //let loginResult: boolean = false
-    this.lobby = await this.client.joinOrCreate(RoomType.LOGIN, {
-      id: id,
-      password: password,
-      result,
-      msg,
-      code,
-    })
+    // let loginResult: boolean = false
+    this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
+
     //서버로 로그인 데이터 전송
-    this.lobby.send(Message.SEND_LOGIN_DATA,{
-      id: loginData.id, 
-      password: loginData.password, 
-      result: loginData.result
+    this.lobby.send(Message.SEND_LOGIN_DATA, {
+      id: loginData.id,
+      password: loginData.password,
+      result: loginData.result,
     })
     //서버에서 로그인 결과를 받음
-    this.lobby.onMessage(Message.SEND_LOGIN_RESULT,(message:{result: boolean})=>{
-      loginData.result = message.result
+    this.lobby.onMessage(Message.SEND_LOGIN_RESULT, (message: { result: boolean }) => {
+      console.log('클라: 로그인 결과: '+message.result)
+      if (message.result === true) {
+        store.dispatch(setLoggedSuccess(true))
+        callback(message.result)
+      }
     })
-    console.log(loginData.result)
-    return loginData.result
-
-    
   }
-
 
   // set up all network listeners before the game starts
   initialize() {
@@ -312,4 +311,24 @@ export default class Network {
   addChatMessage(content: string) {
     this.room?.send(Message.ADD_CHAT_MESSAGE, { content: content })
   }
+
+  // 로그인 정보 db조회를 위해 서버로 메시지 전송
+  // tryLogin(loginData: IUser) {
+  //   const { id, password, result, msg, code } = loginData
+  //   // let loginResult: boolean = false
+  //   this.client.joinOrCreate(RoomType.LOBBY)
+
+  //   //서버로 로그인 데이터 전송
+  //   this.lobby.send(Message.SEND_LOGIN_DATA,{
+  //     id: loginData.id,
+  //     password: loginData.password,
+  //     result: loginData.result
+  //   })
+  //   //서버에서 로그인 결과를 받음
+  //   this.lobby.onMessage(Message.SEND_LOGIN_RESULT,(message:{result: boolean})=>{
+  //     loginData.result = message.result
+  //   })
+
+  //   return loginData.result
+  // }
 }

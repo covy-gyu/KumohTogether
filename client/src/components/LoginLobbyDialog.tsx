@@ -5,13 +5,15 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Alert from '@mui/material/Alert'
 import Snackbar from '@mui/material/Snackbar'
-import { useAppSelector } from '../hooks'
+import { useAppDispatch, useAppSelector } from '../hooks'
 
 import phaserGame from '../PhaserGame'
 import Bootstrap from '../scenes/Bootstrap'
 import { InputAdornment, TextField } from '@mui/material'
 import { IUser } from '../../../types/Users'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
+import store from '../stores'
+import { setLoggedSuccess } from '../stores/UserStore'
 
 const Backdrop = styled.div`
   position: absolute;
@@ -58,6 +60,8 @@ const Content = styled.div`
 `
 
 export default function LoginLobbyDialog() {
+  const dispatch = useAppDispatch()
+  const loggedSuccesss = useAppSelector((state) => state.user.loggedSuccess)
   const [showSnackbar, setShowSnackbar] = useState(false)
   const lobbyJoined = useAppSelector((state) => state.room.lobbyJoined)
   const [idFieldEmpty, setIdFieldEmpty] = useState<boolean>(false)
@@ -81,30 +85,23 @@ export default function LoginLobbyDialog() {
     const isValidPassword = values.password !== ''
 
     if (isValidId === idFieldEmpty) setIdFieldEmpty(!idFieldEmpty)
-    if (isValidPassword === pwFieldEmpty)
-      setPwFieldEmpty(!pwFieldEmpty)
+    if (isValidPassword === pwFieldEmpty) setPwFieldEmpty(!pwFieldEmpty)
 
     if (isValidId && isValidPassword && lobbyJoined) {
-        const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
-        // const tryLogin = bootstrap.network.tryLogin(values)
-        // if (tryLogin ===true) {
-        //   bootstrap.network
-        //     .joinOrCreatePublic()
-        //     .then(() => bootstrap.launchGame())
-        //     .catch((error) => console.error(error))
-        // } else {
-        //   setShowSnackbar(true)
-        // }
-        bootstrap.network.tryLogin(values).then(()=> 
-        bootstrap.network
-        .joinOrCreatePublic()
-        .then(() => bootstrap.launchGame())
-        .catch((error) => console.error(error)))
-        .catch(() => console.log('trylogin 오류'))
-      } else {
-          setShowSnackbar(true)
-      }
-    
+      dispatch(setLoggedSuccess(false))
+      const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
+ 
+      const login = false
+      bootstrap.network.tryLogin(values, (login)=>{
+        if (login) {
+          console.log('로그인성공')
+          bootstrap.network
+            .joinOrCreatePublic()
+            .then(() => bootstrap.launchGame())
+            .catch((error) => console.error(error))
+        }
+      })
+    }
   }
   return (
     <>
@@ -125,7 +122,7 @@ export default function LoginLobbyDialog() {
           Trying to connect to server, please try again!
         </Alert>
       </Snackbar>
-      <Backdrop >
+      <Backdrop>
         <Wrapper onSubmit={handleSubmit}>
           <Title>Welcome to KumohTogether</Title>
           <Content onSubmit={handleSubmit}>
