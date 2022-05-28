@@ -27,154 +27,64 @@ export class Lobby extends Room<LobbyState> {
   private result: boolean = false
 
   async onCreate(options: IUser) {
-    const { id, password, result } = options
-    this.id = id
-    this.password = password
-    this.result = result
+    // const { id, password, result } = options
+    // this.id = id
+    // this.password = password
+    // this.result = result
 
     let hasPassword = false
-    if (password) {
-      // const salt = await bcrypt.genSalt(10)
-      // this.password = await bcrypt.hash(password, salt)
-      hasPassword = true
-    }
-    this.setMetadata({ id, password, result })
+    // if (password) {
+    //   // const salt = await bcrypt.genSalt(10)
+    //   // this.password = await bcrypt.hash(password, salt)
+    //   hasPassword = true
+    // }
+    // this.setMetadata({ id, password, result })
 
     this.setState(new LobbyState())
-    console.log('lobby')
 
     //클라이언트에서 로그인 데이터를 받음
     this.onMessage(Message.SEND_LOGIN_DATA, (client, message: { id: string, password: string, result: boolean }) => {
-      //로그인 db 호출
-      let loginResult = login(options)
-    
-      //클라이언트로 로그인 결과 전송
-      client.send(Message.SEND_LOGIN_RESULT, {result: loginResult} )
-    })
-    
-
-    // // HARD-CODED: Add 5 computers in a room
-    // for (let i = 0; i < 5; i++) {
-    //   this.state.computers.set(String(i), new Computer())
-    // }
-
-    // // HARD-CODED: Add 3 whiteboards in a room
-    // for (let i = 0; i < 3; i++) {
-    //   this.state.whiteboards.set(String(i), new Whiteboard())
-    // }
-
-    // // when a player connect to a computer, add to the computer connectedUser array
-    // this.onMessage(Message.CONNECT_TO_COMPUTER, (client, message: { computerId: string }) => {
-    //   this.dispatcher.dispatch(new ComputerAddUserCommand(), {
-    //     client,
-    //     computerId: message.computerId,
-    //   })
-    // })
-
-    // // when a player disconnect from a computer, remove from the computer connectedUser array
-    // this.onMessage(Message.DISCONNECT_FROM_COMPUTER, (client, message: { computerId: string }) => {
-    //   this.dispatcher.dispatch(new ComputerRemoveUserCommand(), {
-    //     client,
-    //     computerId: message.computerId,
-    //   })
-    // })
-
-    // // when a player stop sharing screen
-    // this.onMessage(Message.STOP_SCREEN_SHARE, (client, message: { computerId: string }) => {
-    //   const computer = this.state.computers.get(message.computerId)
-    //   computer.connectedUser.forEach((id) => {
-    //     this.clients.forEach((cli) => {
-    //       if (cli.sessionId === id && cli.sessionId !== client.sessionId) {
-    //         cli.send(Message.STOP_SCREEN_SHARE, client.sessionId)
-    //       }
-    //     })
-    //   })
-    // })
-
-    // // when a player connect to a whiteboard, add to the whiteboard connectedUser array
-    // this.onMessage(Message.CONNECT_TO_WHITEBOARD, (client, message: { whiteboardId: string }) => {
-    //   this.dispatcher.dispatch(new WhiteboardAddUserCommand(), {
-    //     client,
-    //     whiteboardId: message.whiteboardId,
-    //   })
-    // })
-
-    // // when a player disconnect from a whiteboard, remove from the whiteboard connectedUser array
-    // this.onMessage(
-    //   Message.DISCONNECT_FROM_WHITEBOARD,
-    //   (client, message: { whiteboardId: string }) => {
-    //     this.dispatcher.dispatch(new WhiteboardRemoveUserCommand(), {
-    //       client,
-    //       whiteboardId: message.whiteboardId,
-    //     })
-    //   }
-    // )
-
-    // // when receiving updatePlayer message, call the PlayerUpdateCommand
-    // this.onMessage(
-    //   Message.UPDATE_PLAYER,
-    //   (client, message: { x: number; y: number; anim: string }) => {
-    //     this.dispatcher.dispatch(new PlayerUpdateCommand(), {
-    //       client,
-    //       x: message.x,
-    //       y: message.y,
-    //       anim: message.anim,
-    //     })
-    //   }
-    // )
-
-    // // when receiving updatePlayerName message, call the PlayerUpdateNameCommand
-    // this.onMessage(Message.UPDATE_PLAYER_NAME, (client, message: { name: string }) => {
-    //   this.dispatcher.dispatch(new PlayerUpdateNameCommand(), {
-    //     client,
-    //     name: message.name,
-    //   })
-    // })
-
-    // // when a player is ready to connect, call the PlayerReadyToConnectCommand
-    // this.onMessage(Message.READY_TO_CONNECT, (client) => {
-    //   const player = this.state.players.get(client.sessionId)
-    //   if (player) player.readyToConnect = true
-    // })
-
-    // // when a player is ready to connect, call the PlayerReadyToConnectCommand
-    // this.onMessage(Message.VIDEO_CONNECTED, (client) => {
-    //   const player = this.state.players.get(client.sessionId)
-    //   if (player) player.videoConnected = true
-    // })
-
-    // // when a player disconnect a stream, broadcast the signal to the other player connected to the stream
-    // this.onMessage(Message.DISCONNECT_STREAM, (client, message: { clientId: string }) => {
-    //   this.clients.forEach((cli) => {
-    //     if (cli.sessionId === message.clientId) {
-    //       cli.send(Message.DISCONNECT_STREAM, client.sessionId)
-    //     }
-    //   })
-    // })
-
-    // // when a player send a chat message, update the message array and broadcast to all connected clients except the sender
-    // this.onMessage(Message.ADD_CHAT_MESSAGE, (client, message: { content: string }) => {
-    //   // update the message array (so that players join later can also see the message)
-    //   this.dispatcher.dispatch(new ChatMessageUpdateCommand(), {
-    //     client,
-    //     content: message.content,
-    //   })
-
-    //   // broadcast to all currently connected clients except the sender (to render in-game dialog on top of the character)
-    //   this.broadcast(
-    //     Message.ADD_CHAT_MESSAGE,
-    //     { clientId: client.sessionId, content: message.content },
-    //     { except: client }
-    //   )
-    // })
-    this.onMessage(Message.UPDATE_PLAYER_NAME, (client, message: { name: string }) => {
-      this.dispatcher.dispatch(new PlayerUpdateNameCommand(), {
-        client,
-        name: message.name,
+      const { id, password, result } = message
+      this.id = id
+      this.password = password
+      this.result = result
+      
+      const user:IUser ={
+        id: message.id,
+        password : message.password,
+        result : false,
+        msg : '',
+        code: 0,
+      }
+      // //로그인 db 호출
+      login({id:this.id,password:this.password}, (user)=>{
+        console.log('서버: 로그인 결과: '+user.result)
+        // //클라이언트로 로그인 결과 전송
+        client.send(Message.SEND_LOGIN_RESULT, {result: user.result} )
       })
+
+
+      // {
+      //   console.log(user.result)
+      //   client.send(Message.SEND_LOGIN_RESULT, {result: user.result} )
+      // }
+      
     })
 
   }
+
+  //  getLogin(client:Client){
+  //   const userData ={
+
+  //   }
+
+
+  //      //로그인 db 호출
+  //      let loginResult = await login(userData, user)
+  //       //클라이언트로 로그인 결과 전송
+  //     client.send(Message.SEND_LOGIN_RESULT, {result: loginResult} )
+  // }
+
 
   async onAuth(client: Client, options: { 
     id:string,
@@ -188,7 +98,13 @@ export class Lobby extends Room<LobbyState> {
   }
 
   onJoin(client: Client, options: any) {
- 
+    const { id, password, result } = options
+    this.id = id
+    this.password = password
+    this.result = result
+
+    this.setMetadata({ id, password, result })
+
   }
 
   onLeave(client: Client, consented: boolean) {
