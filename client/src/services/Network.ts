@@ -1,5 +1,6 @@
 import { Client, Room } from 'colyseus.js'
 import { IComputer, IOfficeState, IPlayer, IWhiteboard } from '../../../types/IOfficeState'
+import { ILobbyState } from '../../../types/ILobbyState'
 import { Message } from '../../../types/Messages'
 import { IRoomData, RoomType } from '../../../types/Rooms'
 import { ItemType } from '../../../types/Items'
@@ -25,7 +26,7 @@ import { setWhiteboardUrls } from '../stores/WhiteboardStore'
 export default class Network {
   private client: Client
   private room?: Room<IOfficeState>
-  private lobby!: Room
+  private lobby!: Room<ILobbyState>
   webRTC?: WebRTC
 
   mySessionId!: string
@@ -51,7 +52,7 @@ export default class Network {
    * connected clients whenever rooms with "realtime listing" have updates
    */
   async joinLobbyRoom() {
-    this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
+    this.lobby = await this.client.joinOrCreate(RoomType.LOGIN)
 
     this.lobby.onMessage('rooms', (rooms) => {
       store.dispatch(setAvailableRooms(rooms))
@@ -91,12 +92,30 @@ export default class Network {
   }
 
   // 로그인 정보 db조회를 위해 서버로 메시지 전송
-  async tryLogin(userData: IUser) {
-    const { id, password } = userData
-    this.lobby.onMessage(Message.TRY_TO_LOGIN,({id,password})=>{
-      store.dispatch(setLoginInfoMap({ id, password }))
-    })  
-    return userData.result
+  async tryLogin(loginData: IUser) {
+    const { id, password, result, msg, code } = loginData
+    //let loginResult: boolean = false
+    this.lobby = await this.client.joinOrCreate(RoomType.LOGIN, {
+      id: id,
+      password: password,
+      result,
+      msg,
+      code,
+    })
+    //서버로 로그인 데이터 전송
+    this.lobby.send(Message.SEND_LOGIN_DATA,{
+      id: loginData.id, 
+      password: loginData.password, 
+      result: loginData.result
+    })
+    //서버에서 로그인 결과를 받음
+    this.lobby.onMessage(Message.SEND_LOGIN_RESULT,(message:{result: boolean})=>{
+      loginData.result = message.result
+    })
+    console.log(loginData.result)
+    return loginData.result
+
+    
   }
 
 
