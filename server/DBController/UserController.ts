@@ -20,13 +20,11 @@ export default function login(message:{id:string,password:string}, callback: (us
         msg : '',
         code: 0,
     }
-
+    var selectQuery = 'SELECT * from kumoh_together.member where member_id = ?'
     var json
     connection.connect;
-    connection.query('SELECT * from kumoh_together.member where member_id = ' + mysql.escape(user.id) + ';', (error: any, rows: string) => {
+    connection.query(selectQuery,[user.id], (error: any, rows: string) => {
         if (error) throw error;
-
-        
         
         var string = JSON.stringify(rows);
         json = JSON.parse(string);
