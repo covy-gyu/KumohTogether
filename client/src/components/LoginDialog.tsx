@@ -157,7 +157,7 @@ export default function LoginDialog() {
     if (name === '') {
       setNameFieldEmpty(true)
     } else if (roomJoined) {
-      console.log('Join! Name:', name, 'Avatar:', avatars[avatarIndex].name)
+      console.log('참가! 이름:', name, '아바타:', avatars[avatarIndex].name)
       game.registerKeys()
       game.myPlayer.setPlayerName(name)
       game.myPlayer.setPlayerTexture(avatars[avatarIndex].name)
@@ -180,7 +180,7 @@ export default function LoginDialog() {
       </RoomDescription>
       <Content>
         <Left>
-          <SubTitle>Select an avatar</SubTitle>
+          <SubTitle>아바타 선택하기</SubTitle>
           <Swiper
             // install Swiper modules
             navigation
@@ -205,7 +205,7 @@ export default function LoginDialog() {
             variant="outlined"
             color="secondary"
             error={nameFieldEmpty}
-            helperText={nameFieldEmpty && 'Name is required'}
+            helperText={nameFieldEmpty && '이름을 적어주세요'}
             onInput={(e) => {
               setName((e.target as HTMLInputElement).value)
             }}
@@ -213,8 +213,9 @@ export default function LoginDialog() {
           {!videoConnected && (
             <Warning>
               <Alert variant="outlined" severity="warning">
-                <AlertTitle>Warning</AlertTitle>
-                No webcam/mic connected - <strong>connect one for best experience!</strong>
+                <AlertTitle>! 경고 !</AlertTitle>
+                연결된 웹캠/마이크 없음 
+                <strong> - 연결을 권장드립니다! 😆</strong>
               </Alert>
               <Button
                 variant="outlined"
@@ -223,21 +224,21 @@ export default function LoginDialog() {
                   game.network.webRTC?.getUserMedia()
                 }}
               >
-                Connect Webcam
+                웹캠 연결하기
               </Button>
             </Warning>
           )}
 
           {videoConnected && (
             <Warning>
-              <Alert variant="outlined">Webcam connected!</Alert>
+              <Alert variant="outlined">웹캠이 연결되었습니다!</Alert>
             </Warning>
           )}
         </Right>
       </Content>
       <Bottom>
         <Button variant="contained" color="secondary" size="large" type="submit">
-          Join
+          참가하기
         </Button>
       </Bottom>
     </Wrapper>

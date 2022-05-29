@@ -120,7 +120,7 @@ export const CustomRoomTable = () => {
   }
 
   return availableRooms.length === 0 ? (
-    <MessageText>There are no custom rooms now, create one or join the public lobby.</MessageText>
+    <MessageText>방이 없습니다, 새로 만들어 보세요 </MessageText>
   ) : (
     <>
       <CustomRoomTableContainer component={Paper}>
@@ -128,8 +128,8 @@ export const CustomRoomTable = () => {
           <TableHead>
             <TableRow>
               <TableCell></TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Description</TableCell>
+              <TableCell>이름</TableCell>
+              <TableCell>설명</TableCell>
               <TableCell>ID</TableCell>
               <TableCell align="center">
                 <PeopleAltIcon />
@@ -186,7 +186,7 @@ export const CustomRoomTable = () => {
       <PasswordDialog open={showPasswordDialog} onClose={resetPasswordDialog}>
         <form onSubmit={handlePasswordSubmit}>
           <DialogContent className="dialog-content">
-            <MessageText>This a private room, please enter password:</MessageText>
+            <MessageText>개인 방입니다 , 비밀번호를 입력해주세요! :</MessageText>
             <TextField
               autoFocus
               fullWidth

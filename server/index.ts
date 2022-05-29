@@ -31,8 +31,8 @@ gameServer.define(RoomType.LOBBY, Lobby, {
   code: 0
 })
 gameServer.define(RoomType.PUBLIC, SkyOffice, {
-  name: 'Public Lobby',
-  description: 'For making friends and familiarizing yourself with the controls',
+  name: 'Kumoh Square',
+  description: '🚩 친구 만들거나 회의, 수업을 들어보세요 💙',
   password: null,
   autoDispose: false,
 })

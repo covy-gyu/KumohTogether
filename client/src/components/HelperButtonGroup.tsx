@@ -134,7 +134,7 @@ export default function HelperButtonGroup() {
             </RoomDescription>
             <p className="tip">
               <LightbulbIcon />
-              Shareable link coming up 😄
+              공유링크 준비중... 😄
             </p>
           </Wrapper>
         )}
@@ -146,24 +146,24 @@ export default function HelperButtonGroup() {
             </IconButton>
             <ul>
               <li>
-                <strong>Arrow keys</strong> to move
+                <strong>방향키</strong> 움직임
               </li>
               <li>
-                <strong>E</strong> to sit down (when facing a chair)
+                <strong>E</strong> 앉기 (의자 앞에서)
               </li>
               <li>
-                <strong>R</strong> to use computer to screen share (when facing a computer)
+                <strong>R</strong> 화면공유를 위한 컴퓨터 사용 (컴퓨터 앞에서)
               </li>
               <li>
-                <strong>Enter</strong> to open chat
+                <strong>Enter</strong> 채팅열기
               </li>
               <li>
-                <strong>ESC</strong> to close chat
+                <strong>ESC</strong> 채팅닫기
               </li>
             </ul>
             <p className="tip">
               <LightbulbIcon />
-              Video connection will start if you are close to someone else
+              당신이 누군가의 가까이 접근하면 비디오가 연결됩니다
             </p>
           </Wrapper>
         )}

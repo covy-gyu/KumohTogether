@@ -252,7 +252,7 @@ export default function Chat() {
                 inputRef={inputRef}
                 autoFocus={focused}
                 fullWidth
-                placeholder="Press Enter to chat"
+                placeholder="Enter키로 대화 입력"
                 value={inputValue}
                 onKeyDown={handleKeyDown}
                 onChange={handleChange}

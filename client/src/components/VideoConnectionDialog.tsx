@@ -34,9 +34,9 @@ export default function VideoConnectionDialog() {
               setConnectionWarning(!connectionWarning)
             }}
           >
-            <AlertTitle>Warning</AlertTitle>
-            No webcam connected
-            <br /> <strong>connect one for full experience!</strong>
+            <AlertTitle>! 경고 !</AlertTitle>
+            연결된 웹캠 없음 
+            <br /> <strong> - 연결을 권장드립니다! 😆</strong>
           </Alert>
         )}
         <Button
