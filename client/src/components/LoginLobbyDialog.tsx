@@ -94,7 +94,7 @@ export default function LoginLobbyDialog() {
       const login = false
       bootstrap.network.tryLogin(values, (login)=>{
         if (login) {
-          console.log('로그인성공')
+          console.log('클라이언트: 로그인성공')
           bootstrap.network
             .joinOrCreatePublic()
             .then(() => bootstrap.launchGame())
@@ -134,7 +134,7 @@ export default function LoginLobbyDialog() {
               variant="outlined"
               color="secondary"
               error={idFieldEmpty}
-              helperText={idFieldEmpty && 'ID가 필요합니다.'}
+              helperText={idFieldEmpty && '아이디가 필요합니다.'}
               onChange={handleChange('id')}
             />
             <TextField
@@ -162,7 +162,7 @@ export default function LoginLobbyDialog() {
               onChange={handleChange('password')}
             />
             <Button variant="contained" color="secondary" type="submit">
-              LogIn
+              로그인
             </Button>
           </Content>
         </Wrapper>
