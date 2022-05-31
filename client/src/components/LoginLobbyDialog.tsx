@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from '../hooks'
 
 import phaserGame from '../PhaserGame'
 import Bootstrap from '../scenes/Bootstrap'
-import { InputAdornment, TextField } from '@mui/material'
+import { InputAdornment, LinearProgress, TextField } from '@mui/material'
 import { IUser } from '../../../types/Users'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import store from '../stores'
@@ -56,6 +56,18 @@ const Content = styled.div`
   img {
     border-radius: 8px;
     height: 120px;
+  }
+`
+const ProgressBar = styled(LinearProgress)`
+  width: 360px;
+`
+const ProgressBarWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  h3 {
+    color: #33ac96;
   }
 `
 
@@ -166,6 +178,12 @@ export default function LoginLobbyDialog() {
             </Button>
           </Content>
         </Wrapper>
+        {!lobbyJoined && (
+          <ProgressBarWrapper>
+            <h3> 서버 연결 중...</h3>
+            <ProgressBar color="secondary" />
+          </ProgressBarWrapper>
+        )}
       </Backdrop>
     </>
   )
