@@ -58,21 +58,21 @@ export const CreateRoomForm = () => {
   return (
     <CreateRoomFormWrapper onSubmit={handleSubmit}>
       <TextField
-        label="Name"
+        label="제목"
         variant="outlined"
         color="secondary"
         autoFocus
         error={nameFieldEmpty}
-        helperText={nameFieldEmpty && 'Name is required'}
+        helperText={nameFieldEmpty && '방 제목이 필요합니다'}
         onChange={handleChange('name')}
       />
 
       <TextField
-        label="Description"
+        label="소개"
         variant="outlined"
         color="secondary"
         error={descriptionFieldEmpty}
-        helperText={descriptionFieldEmpty && 'Description is required'}
+        helperText={descriptionFieldEmpty && '방 소개가 필요합니다'}
         multiline
         rows={4}
         onChange={handleChange('description')}
@@ -80,7 +80,7 @@ export const CreateRoomForm = () => {
 
       <TextField
         type={showPassword ? 'text' : 'password'}
-        label="Password (optional)"
+        label="비밀번호 (선택사항)"
         onChange={handleChange('password')}
         color="secondary"
         InputProps={{
@@ -98,7 +98,7 @@ export const CreateRoomForm = () => {
         }}
       />
       <Button variant="contained" color="secondary" type="submit">
-        Create
+        만들기
       </Button>
     </CreateRoomFormWrapper>
   )

@@ -120,7 +120,7 @@ export const CustomRoomTable = () => {
   }
 
   return availableRooms.length === 0 ? (
-    <MessageText>방이 없습니다, 새로 만들어 보세요 </MessageText>
+    <MessageText>방이 없습니다, 새로운 방을 만들어 보세요 </MessageText>
   ) : (
     <>
       <CustomRoomTableContainer component={Paper}>
@@ -157,7 +157,7 @@ export const CustomRoomTable = () => {
                   <TableCell>{roomId}</TableCell>
                   <TableCell align="center">{clients}</TableCell>
                   <TableCell align="center">
-                    <Tooltip title={hasPassword ? 'Password required' : ''}>
+                    <Tooltip title={hasPassword ? '비밀방' : ''}>
                       <Button
                         variant="outlined"
                         color="secondary"
@@ -172,7 +172,7 @@ export const CustomRoomTable = () => {
                       >
                         <div className="join-wrapper">
                           {hasPassword && <LockIcon className="lock-icon" />}
-                          Join
+                          참가
                         </div>
                       </Button>
                     </Tooltip>
@@ -186,7 +186,7 @@ export const CustomRoomTable = () => {
       <PasswordDialog open={showPasswordDialog} onClose={resetPasswordDialog}>
         <form onSubmit={handlePasswordSubmit}>
           <DialogContent className="dialog-content">
-            <MessageText>개인 방입니다 , 비밀번호를 입력해주세요! :</MessageText>
+            <MessageText>비밀방입니다 , 비밀번호를 입력해주세요! :</MessageText>
             <TextField
               autoFocus
               fullWidth
@@ -203,16 +203,16 @@ export const CustomRoomTable = () => {
             />
             {showPasswordError && (
               <Alert severity="error" variant="outlined">
-                Incorrect Password!
+                비밀번호가 틀렸습니다 !
               </Alert>
             )}
           </DialogContent>
           <DialogActions>
             <Button color="secondary" onClick={resetPasswordDialog}>
-              Cancel
+              취소
             </Button>
             <Button color="secondary" type="submit">
-              Join
+              참가
             </Button>
           </DialogActions>
         </form>
