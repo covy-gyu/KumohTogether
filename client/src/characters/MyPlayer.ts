@@ -13,6 +13,7 @@ import store from '../stores'
 import { pushPlayerJoinedMessage } from '../stores/ChatStore'
 import { ItemType } from '../../../types/Items'
 import VendingMachine from '../items/VendingMachine'
+import Door from '../items/Door'
 
 export default class MyPlayer extends Player {
   private playContainerBody: Phaser.Physics.Arcade.Body
@@ -51,6 +52,13 @@ export default class MyPlayer extends Player {
     if (!cursors) return
 
     const item = playerSelector.selectedItem
+
+    if(item?.itemType === ItemType.DOOR){
+      const door = item as Door
+      console.log('touch')
+      door.changeScene(network)
+      
+    }
 
     if (Phaser.Input.Keyboard.JustDown(keyR)) {
       switch (item?.itemType) {
