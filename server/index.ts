@@ -36,6 +36,12 @@ gameServer.define(RoomType.PUBLIC, SkyOffice, {
   password: null,
   autoDispose: false,
 })
+gameServer.define(RoomType.SQUARE, SkyOffice, {
+  name: 'Kumoh Square',
+  description: '🚩 여기는 디관앞, 금오광장입니다 💙',
+  password: null,
+  autoDispose: false,
+})
 gameServer.define(RoomType.CUSTOM, SkyOffice).enableRealtimeListing()
 
 /**

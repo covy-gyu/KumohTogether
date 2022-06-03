@@ -32,6 +32,7 @@ export default class Network {
   private client: Client
   private room?: Room<IOfficeState>
   private lobby!: Room<ILobbyState>
+  private square?: Room<IOfficeState>
   webRTC?: WebRTC
 
   mySessionId!: string
@@ -81,7 +82,7 @@ export default class Network {
   // method to join the square
   async joinOrCreateSquare() {
     this.room = await this.client.joinOrCreate(RoomType.SQUARE)
-    this.initialize()
+    this.squareInit()
   }
 
   // method to join a custom room
@@ -123,6 +124,99 @@ export default class Network {
       }
     })
   }
+
+ // square initialize
+ squareInit() {
+  if (!this.room) return
+
+  this.lobby.leave()
+  this.mySessionId = this.room.sessionId
+  store.dispatch(setSessionId(this.room.sessionId))
+  this.webRTC = new WebRTC(this.mySessionId, this)
+
+  // new instance added to the players MapSchema
+  this.room.state.players.onAdd = (player: IPlayer, key: string) => {
+    if (key === this.mySessionId) return
+
+    // track changes on every child object inside the players MapSchema
+    player.onChange = (changes) => {
+      changes.forEach((change) => {
+        const { field, value } = change
+        phaserEvents.emit(Event.PLAYER_UPDATED, field, value, key)
+
+        // when a new player finished setting up player name
+        if (field === 'name' && value !== '') {
+          phaserEvents.emit(Event.PLAYER_JOINED, player, key)
+          store.dispatch(setPlayerNameMap({ id: key, name: value }))
+          store.dispatch(pushPlayerJoinedMessage(value))
+        }
+      })
+    }
+  }
+
+  // an instance removed from the players MapSchema
+  this.room.state.players.onRemove = (player: IPlayer, key: string) => {
+    phaserEvents.emit(Event.PLAYER_LEFT, key)
+    this.webRTC?.deleteVideoStream(key)
+    this.webRTC?.deleteOnCalledVideoStream(key)
+    store.dispatch(pushPlayerLeftMessage(player.name))
+    store.dispatch(removePlayerNameMap(key))
+  }
+
+  // new instance added to the computers MapSchema
+  this.room.state.computers.onAdd = (computer: IComputer, key: string) => {
+    // track changes on every child object's connectedUser
+    computer.connectedUser.onAdd = (item, index) => {
+      phaserEvents.emit(Event.ITEM_USER_ADDED, item, key, ItemType.COMPUTER)
+    }
+    computer.connectedUser.onRemove = (item, index) => {
+      phaserEvents.emit(Event.ITEM_USER_REMOVED, item, key, ItemType.COMPUTER)
+    }
+  }
+
+  // new instance added to the whiteboards MapSchema
+  this.room.state.whiteboards.onAdd = (whiteboard: IWhiteboard, key: string) => {
+    store.dispatch(
+      setWhiteboardUrls({
+        whiteboardId: key,
+        roomId: whiteboard.roomId,
+      })
+    )
+    // track changes on every child object's connectedUser
+    whiteboard.connectedUser.onAdd = (item, index) => {
+      phaserEvents.emit(Event.ITEM_USER_ADDED, item, key, ItemType.WHITEBOARD)
+    }
+    whiteboard.connectedUser.onRemove = (item, index) => {
+      phaserEvents.emit(Event.ITEM_USER_REMOVED, item, key, ItemType.WHITEBOARD)
+    }
+  }
+
+  // new instance added to the chatMessages ArraySchema
+  this.room.state.chatMessages.onAdd = (item, index) => {
+    store.dispatch(pushChatMessage(item))
+  }
+
+  // when the server sends room data
+  this.room.onMessage(Message.SEND_ROOM_DATA, (content) => {
+    store.dispatch(setJoinedRoomData(content))
+  })
+
+  // when a user sends a message
+  this.room.onMessage(Message.ADD_CHAT_MESSAGE, ({ clientId, content }) => {
+    phaserEvents.emit(Event.UPDATE_DIALOG_BUBBLE, clientId, content)
+  })
+
+  // when a peer disconnects with myPeer
+  this.room.onMessage(Message.DISCONNECT_STREAM, (clientId: string) => {
+    this.webRTC?.deleteOnCalledVideoStream(clientId)
+  })
+
+  // when a computer user stops sharing screen
+  this.room.onMessage(Message.STOP_SCREEN_SHARE, (clientId: string) => {
+    const computerState = store.getState().computer
+    computerState.shareScreenManager?.onUserLeft(clientId)
+  })
+}
 
   // set up all network listeners before the game starts
   initialize() {
