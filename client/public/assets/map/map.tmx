@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.0" orientation="orthogonal" renderorder="right-down" width="40" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="15" nextobjectid="1269">
+<map version="1.8" tiledversion="1.8.5" orientation="orthogonal" renderorder="right-down" width="40" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="16" nextobjectid="1271">
  <editorsettings>
   <export target="map.json" format="json"/>
  </editorsettings>
@@ -13337,5 +13337,9 @@
  </objectgroup>
  <objectgroup id="14" name="VendingMachine" locked="1">
   <object id="1262" gid="5488" x="378" y="209" width="48" height="72"/>
+ </objectgroup>
+ <objectgroup id="15" name="Door">
+  <object id="1269" gid="60" x="672" y="448" width="32" height="32"/>
+  <object id="1270" gid="60" x="704" y="448" width="32" height="32"/>
  </objectgroup>
 </map>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.8" tiledversion="1.8.5" orientation="orthogonal" renderorder="right-down" width="40" height="30" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="155">
  <tileset firstgid="1" name="FloorAndGround" tilewidth="32" tileheight="32" tilecount="2560" columns="64">
-  <image source="../map/FloorAndGround.png" trans="ff00ff" width="2048" height="1280"/>
+  <image source="FloorAndGround.png" trans="ff00ff" width="2048" height="1280"/>
   <tile id="145">
    <properties>
     <property name="collides" type="bool" value="true"/>
@@ -62,7 +62,7 @@
   <properties>
    <property name="collides" type="bool" value="false"/>
   </properties>
-  <image source="ST-Town-E01.png" trans="ff00ff" width="256" height="1600"/>
+  <image source="../archive/ST-Town-E01.png" trans="ff00ff" width="256" height="1600"/>
   <tile id="88">
    <properties>
     <property name="collides" type="bool" value="true"/>
