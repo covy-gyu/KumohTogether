@@ -20,6 +20,9 @@ import { ItemType } from '../../../types/Items'
 
 import store from '../stores'
 import { setFocused, setShowChat } from '../stores/ChatStore'
+import Door from '../items/Door'
+import phaserGame from '../PhaserGame'
+import Bootstrap from './Bootstrap'
 
 export default class Game extends Phaser.Scene {
   network!: Network
@@ -123,6 +126,13 @@ export default class Game extends Phaser.Scene {
       this.addObjectFromTiled(vendingMachines, obj, 'vendingmachines', 'vendingmachine')
     })
 
+    // import door objects from Tiled map to Phaser
+    const door = this.physics.add.staticGroup({ classType: Door })
+    const doorLayer = this.map.getObjectLayer('Door')
+    doorLayer.objects.forEach((obj, i) => {
+      this.addObjectFromTiled(door, obj, 'door', 'FloorAndGround')
+    })
+    
     // import other objects from Tiled map to Phaser
     this.addGroupFromTiled('Wall', 'tiles_wall', 'FloorAndGround', false)
     this.addGroupFromTiled('Objects', 'office', 'Modern_Office_Black_Shadow', false)
@@ -146,6 +156,7 @@ export default class Game extends Phaser.Scene {
       undefined,
       this
     )
+    
 
     this.physics.add.overlap(
       this.myPlayer,
@@ -154,6 +165,14 @@ export default class Game extends Phaser.Scene {
       undefined,
       this
     )
+
+    this.physics.add.overlap(
+      this.myPlayer,
+      [door],
+      this.handleDoorOverlap,
+      undefined,
+      this
+    ) 
 
     // register network event listeners
     this.network.onPlayerJoined(this.handlePlayerJoined, this)
@@ -164,6 +183,23 @@ export default class Game extends Phaser.Scene {
     this.network.onItemUserAdded(this.handleItemUserAdded, this)
     this.network.onItemUserRemoved(this.handleItemUserRemoved, this)
     this.network.onChatMessageAdded(this.handleChatMessageAdded, this)
+  }
+  private handleDoorOverlap(playerSelector, selectionItem) {
+    const currentItem = playerSelector.selectedItem as Item
+    // currentItem is undefined if nothing was perviously selected
+    if (currentItem) {
+      // if the selection has not changed, do nothing
+      if (currentItem === selectionItem || currentItem.depth >= selectionItem.depth) {
+        return
+      }
+      // if selection changes, clear pervious dialog
+      if (this.myPlayer.playerBehavior !== PlayerBehavior.SITTING) currentItem.clearDialogBox()
+    }
+    // set selected item and set up new dialog
+    playerSelector.selectedItem = selectionItem
+    // selectionItem.onOverlapDialog()
+    selectionItem.changeScene(this.network)
+
   }
 
   private handleItemSelectorOverlap(playerSelector, selectionItem) {
@@ -177,7 +213,6 @@ export default class Game extends Phaser.Scene {
       // if selection changes, clear pervious dialog
       if (this.myPlayer.playerBehavior !== PlayerBehavior.SITTING) currentItem.clearDialogBox()
     }
-
     // set selected item and set up new dialog
     playerSelector.selectedItem = selectionItem
     selectionItem.onOverlapDialog()
