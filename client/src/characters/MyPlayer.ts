@@ -12,6 +12,7 @@ import { phaserEvents, Event } from '../events/EventCenter'
 import store from '../stores'
 import { pushPlayerJoinedMessage } from '../stores/ChatStore'
 import { ItemType } from '../../../types/Items'
+import VendingMachine from '../items/VendingMachine'
 
 export default class MyPlayer extends Player {
   private playContainerBody: Phaser.Physics.Arcade.Body
@@ -63,7 +64,8 @@ export default class MyPlayer extends Player {
           break
         case ItemType.VENDINGMACHINE:
           // hacky and hard-coded, but leaving it as is for now
-          window.open('https://www.buymeacoffee.com/skyoffice', '_blank')
+          const vendingmachine = item as VendingMachine
+          vendingmachine.openDialog()
           break
       }
     }
