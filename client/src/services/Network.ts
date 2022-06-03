@@ -78,6 +78,12 @@ export default class Network {
     this.initialize()
   }
 
+  // method to join the square
+  async joinOrCreateSquare() {
+    this.room = await this.client.joinOrCreate(RoomType.SQUARE)
+    this.initialize()
+  }
+
   // method to join a custom room
   async joinCustomById(roomId: string, password: string | null) {
     this.room = await this.client.joinById(roomId, { password })

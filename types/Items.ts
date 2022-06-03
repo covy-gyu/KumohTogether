@@ -3,4 +3,5 @@ export enum ItemType {
   COMPUTER,
   WHITEBOARD,
   VENDINGMACHINE,
+  DOOR,
 }

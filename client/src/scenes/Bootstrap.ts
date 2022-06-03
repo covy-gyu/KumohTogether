@@ -31,6 +31,10 @@ export default class Bootstrap extends Phaser.Scene {
       frameWidth: 32,
       frameHeight: 32,
     })
+    this.load.spritesheet('door', 'assets/map/FloorAndGround.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+    })
     this.load.spritesheet('chairs', 'assets/items/chair.png', {
       frameWidth: 32,
       frameHeight: 64,
@@ -97,6 +101,13 @@ export default class Bootstrap extends Phaser.Scene {
 
     // update Redux state
     store.dispatch(setRoomJoined(true))
+  }
+  launchSquare(){
+    this.network.webRTC?.checkPreviousPermission()
+    //룸타입검사해서 해당 씬에 맞게 출력되도록 하기
+    this.scene.launch('square',{
+     network: this.network,
+    })
   }
 
   changeBackgroundMode(backgroundMode: BackgroundMode) {
