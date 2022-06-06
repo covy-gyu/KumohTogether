@@ -29,12 +29,12 @@ export default class MyPlayer extends Player {
     super(scene, x, y, texture, id, frame)
     this.playContainerBody = this.playerContainer.body as Phaser.Physics.Arcade.Body
   }
-  destroy(fromScene?:boolean){
-    this.playerContainer.destroy()
+  // destroy(fromScene?:boolean){
+  //   this.playerContainer.destroy()
 
-    super.destroy(fromScene)
-    console.log('player destroy')
-  }
+  //   super.destroy(fromScene)
+  //   console.log('player destroy')
+  // }
 
   setPlayerName(name: string) {
     this.playerName.setText(name)
@@ -212,7 +212,7 @@ Phaser.GameObjects.GameObjectFactory.register(
     frame?: string | number
   ) {
     const sprite = new MyPlayer(this.scene, x, y, texture, id, frame)
-
+    console.log(sprite.scene)
     this.displayList.add(sprite)
     this.updateList.add(sprite)
 

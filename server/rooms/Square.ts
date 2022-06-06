@@ -4,18 +4,18 @@ import { Dispatcher } from '@colyseus/command'
 import { Player, Computer, Whiteboard, SquareState } from './schema/SquareState'
 import { Message } from '../../types/Messages'
 import { IRoomData } from '../../types/Rooms'
-import { whiteboardRoomIds } from './schema/OfficeState'
-import PlayerUpdateCommand from './commands/PlayerUpdateCommand'
-import PlayerUpdateNameCommand from './commands/PlayerUpdateNameCommand'
+import { whiteboardRoomIds } from './schema/SquareState'
+import PlayerUpdateCommand from './commands/square/PlayerUpdateCommand'
+import PlayerUpdateNameCommand from './commands/square/PlayerUpdateNameCommand'
 import {
   ComputerAddUserCommand,
   ComputerRemoveUserCommand,
-} from './commands/ComputerUpdateArrayCommand'
+} from './commands/square/ComputerUpdateArrayCommand'
 import {
   WhiteboardAddUserCommand,
   WhiteboardRemoveUserCommand,
-} from './commands/WhiteboardUpdateArrayCommand'
-import ChatMessageUpdateCommand from './commands/ChatMessageUpdateCommand'
+} from './commands/square/WhiteboardUpdateArrayCommand'
+import ChatMessageUpdateCommand from './commands/square/ChatMessageUpdateCommand'
 
 export class Square extends Room<SquareState> {
   private dispatcher = new Dispatcher(this)
@@ -106,7 +106,6 @@ export class Square extends Room<SquareState> {
           y: message.y,
           anim: message.anim,
         })
-        console.log('square updateplayer')
       }
     )
 

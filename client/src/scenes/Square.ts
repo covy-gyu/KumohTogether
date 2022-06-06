@@ -19,6 +19,7 @@ import store from '../stores'
 import { setFocused, setShowChat } from '../stores/ChatStore'
 import LogInfo from '../services/LogInfo'
 import { logInfoSlice } from '../stores/LogInfoStore'
+import { phaserEvents } from '../events/EventCenter'
 
 export default class Square extends Phaser.Scene {
   network!: Network
@@ -31,6 +32,7 @@ export default class Square extends Phaser.Scene {
   private otherPlayers!: Phaser.Physics.Arcade.Group
   private otherPlayerMap = new Map<string, OtherPlayer>()
   logInfo!: LogInfo
+  private location = 'square'
 
   constructor() {
     super('square')
@@ -75,8 +77,7 @@ export default class Square extends Phaser.Scene {
     groundLayer.setCollisionByProperty({ collides: true })
 
     // debugDraw(groundLayer, this)
-
-    this.myPlayer = this.add.myPlayer(705, 500, "adam", this.network.mySessionId)
+    this.myPlayer = this.add.myPlayer(705, 500, "lucy", this.network.mySessionId)
     this.playerSelector = new PlayerSelector(this, 0, 0, 16, 16)
 
     // import other objects from Tiled map to Phaser
@@ -103,14 +104,17 @@ export default class Square extends Phaser.Scene {
       this
     )
 
+   // phaserEvents.removeAllListeners()
     // register network event listeners
-    this.network.onPlayerJoined(this.handlePlayerJoined, this)
-    console.log('onplayerjoined_square')
-    this.network.onPlayerLeft(this.handlePlayerLeft, this)
-    this.network.onMyPlayerReady(this.handleMyPlayerReady, this)
-    this.network.onMyPlayerVideoConnected(this.handleMyVideoConnected, this)
-    this.network.onPlayerUpdated(this.handlePlayerUpdated, this)
-    this.network.onChatMessageAdded(this.handleChatMessageAdded, this)
+    console.log('square: onPlayerJoined')
+    //if (this.network.scene === 'square') {
+      this.network.onPlayerJoined(this.handlePlayerJoined, this)
+      this.network.onPlayerLeft(this.handlePlayerLeft, this)
+      this.network.onMyPlayerReady(this.handleMyPlayerReady, this)
+      this.network.onMyPlayerVideoConnected(this.handleMyVideoConnected, this)
+      this.network.onPlayerUpdated(this.handlePlayerUpdated, this)
+      this.network.onChatMessageAdded(this.handleChatMessageAdded, this)
+   // }
   }
 
   private handleItemSelectorOverlap(playerSelector, selectionItem) {

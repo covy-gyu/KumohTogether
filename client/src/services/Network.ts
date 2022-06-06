@@ -35,6 +35,7 @@ export default class Network {
   private room?: Room<IOfficeState>
   private lobby!: Room<ILobbyState>
   private square?: Room<ISquareState>
+  scene!: string
   webRTC?: WebRTC
 
   mySessionId!: string
@@ -48,15 +49,16 @@ export default class Network {
         ? `wss://sky-office.herokuapp.com`
         : `${this.protocol}//${window.location.hostname}:2567`
     this.client = new Client(this.endpoint)
+    this.scene = 'lobby'
     this.joinLobbyRoom().then(() => {
       store.dispatch(setLobbyJoined(true))
     })
 
-  
+
   }
-  setInit(){
+  setInit() {
     console.log('set init')
-   
+
   }
 
   /**
@@ -65,7 +67,6 @@ export default class Network {
    */
   async joinLobbyRoom() {
     this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
-
     this.lobby.onMessage('rooms', (rooms) => {
       store.dispatch(setAvailableRooms(rooms))
     })
@@ -81,14 +82,20 @@ export default class Network {
 
   // method to join the public lobby
   async joinOrCreatePublic() {
+    this.scene = 'game'
     this.room = await this.client.joinOrCreate(RoomType.PUBLIC)
     this.initialize()
   }
 
   // method to join the square
   async joinOrCreateSquare() {
+    this.scene = 'square'
     this.square = await this.client.joinOrCreate(RoomType.SQUARE)
     this.client = new Client(this.endpoint)
+    this.mySessionId = this.square.sessionId
+    store.dispatch(setSessionId(this.square.sessionId))
+    this.webRTC = new WebRTC(this.mySessionId, this)
+
     this.squareInit()
   }
 
@@ -111,7 +118,7 @@ export default class Network {
   }
 
   // 로그인 정보 db조회를 위해 서버로 메시지 전송
-  async tryLogin(loginData: IUser, callback:(loginSuccess:boolean)=>void) {
+  async tryLogin(loginData: IUser, callback: (loginSuccess: boolean) => void) {
     const { id, password, result, msg, code } = loginData
     // let loginResult: boolean = false
     this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
@@ -124,7 +131,7 @@ export default class Network {
     })
     //서버에서 로그인 결과를 받음
     this.lobby.onMessage(Message.SEND_LOGIN_RESULT, (message: { result: boolean }) => {
-      console.log('클라: 로그인 결과: '+message.result)
+      console.log('클라: 로그인 결과: ' + message.result)
       if (message.result === true) {
         store.dispatch(setLoggedSuccess(true))
         callback(message.result)
@@ -132,109 +139,99 @@ export default class Network {
     })
   }
 
- // square initialize
- squareInit() {
-  phaserEvents.on(Event.MY_PLAYER_NAME_CHANGE, this.updatePlayerName, this)
-  phaserEvents.on(Event.MY_PLAYER_TEXTURE_CHANGE, this.updatePlayer, this)
-  phaserEvents.on(Event.PLAYER_DISCONNECTED, this.playerStreamDisconnect, this)
-  if (!this.room) return
-  if (!this.square) return
+  // square initialize
+  squareInit() {
+    phaserEvents.on(Event.MY_PLAYER_NAME_CHANGE, this.updatePlayerName, this)
+    phaserEvents.on(Event.MY_PLAYER_TEXTURE_CHANGE, this.updatePlayer, this)
+    phaserEvents.on(Event.PLAYER_DISCONNECTED, this.playerStreamDisconnect, this)
+    if (!this.room) return
+    if (!this.square) return
 
-  this.room.leave()
+    this.room.leave()
 
-  
+    // new instance added to the players MapSchema
+    this.square.state.players.onAdd = (player: IPlayer, key: string) => {
+      if (key === this.mySessionId) return
+      // track changes on every child object inside the players MapSchema
+      player.onChange = (changes) => {
+        changes.forEach((change) => {
+          const { field, value } = change
+          phaserEvents.emit(Event.PLAYER_UPDATED, field, value, key)
 
-  this.room = this.square
-
-  this.mySessionId = this.room.sessionId
-  store.dispatch(setSessionId(this.room.sessionId))
-  this.webRTC = new WebRTC(this.mySessionId, this)
-
-  
-
-  // new instance added to the players MapSchema
-  this.room.state.players.onAdd = (player: IPlayer, key: string) => {
-    if (key === this.mySessionId) return
-    console.log('square init')
-    // track changes on every child object inside the players MapSchema
-    player.onChange = (changes) => {
-      changes.forEach((change) => {
-        const { field, value } = change
-        phaserEvents.emit(Event.PLAYER_UPDATED, field, value, key)
-
-        // when a new player finished setting up player name
-        if (field === 'name' && value !== '') {
-          phaserEvents.emit(Event.PLAYER_JOINED, player, key)
-          store.dispatch(setPlayerNameMap({ id: key, name: value }))
-          store.dispatch(pushPlayerJoinedMessage(value))
-        }
-      })
+          // when a new player finished setting up player name
+          if (field === 'name' && value !== '') {
+            phaserEvents.emit(Event.PLAYER_JOINED, player, key)
+            store.dispatch(setPlayerNameMap({ id: key, name: value }))
+            console.log('square init')
+            store.dispatch(pushPlayerJoinedMessage(value))
+          }
+        })
+      }
     }
-  }
 
-  // an instance removed from the players MapSchema
-  this.room.state.players.onRemove = (player: IPlayer, key: string) => {
-    phaserEvents.emit(Event.PLAYER_LEFT, key)
-    this.webRTC?.deleteVideoStream(key)
-    this.webRTC?.deleteOnCalledVideoStream(key)
-    store.dispatch(pushPlayerLeftMessage(player.name))
-    store.dispatch(removePlayerNameMap(key))
-  }
-
-  // new instance added to the computers MapSchema
-  this.room.state.computers.onAdd = (computer: IComputer, key: string) => {
-    // track changes on every child object's connectedUser
-    computer.connectedUser.onAdd = (item, index) => {
-      phaserEvents.emit(Event.ITEM_USER_ADDED, item, key, ItemType.COMPUTER)
+    // an instance removed from the players MapSchema
+    this.square.state.players.onRemove = (player: IPlayer, key: string) => {
+      phaserEvents.emit(Event.PLAYER_LEFT, key)
+      this.webRTC?.deleteVideoStream(key)
+      this.webRTC?.deleteOnCalledVideoStream(key)
+      store.dispatch(pushPlayerLeftMessage(player.name))
+      store.dispatch(removePlayerNameMap(key))
     }
-    computer.connectedUser.onRemove = (item, index) => {
-      phaserEvents.emit(Event.ITEM_USER_REMOVED, item, key, ItemType.COMPUTER)
+
+    // new instance added to the computers MapSchema
+    this.square.state.computers.onAdd = (computer: IComputer, key: string) => {
+      // track changes on every child object's connectedUser
+      computer.connectedUser.onAdd = (item, index) => {
+        phaserEvents.emit(Event.ITEM_USER_ADDED, item, key, ItemType.COMPUTER)
+      }
+      computer.connectedUser.onRemove = (item, index) => {
+        phaserEvents.emit(Event.ITEM_USER_REMOVED, item, key, ItemType.COMPUTER)
+      }
     }
-  }
 
-  // new instance added to the whiteboards MapSchema
-  this.room.state.whiteboards.onAdd = (whiteboard: IWhiteboard, key: string) => {
-    store.dispatch(
-      setWhiteboardUrls({
-        whiteboardId: key,
-        roomId: whiteboard.roomId,
-      })
-    )
-    // track changes on every child object's connectedUser
-    whiteboard.connectedUser.onAdd = (item, index) => {
-      phaserEvents.emit(Event.ITEM_USER_ADDED, item, key, ItemType.WHITEBOARD)
+    // new instance added to the whiteboards MapSchema
+    this.square.state.whiteboards.onAdd = (whiteboard: IWhiteboard, key: string) => {
+      store.dispatch(
+        setWhiteboardUrls({
+          whiteboardId: key,
+          roomId: whiteboard.roomId,
+        })
+      )
+      // track changes on every child object's connectedUser
+      whiteboard.connectedUser.onAdd = (item, index) => {
+        phaserEvents.emit(Event.ITEM_USER_ADDED, item, key, ItemType.WHITEBOARD)
+      }
+      whiteboard.connectedUser.onRemove = (item, index) => {
+        phaserEvents.emit(Event.ITEM_USER_REMOVED, item, key, ItemType.WHITEBOARD)
+      }
     }
-    whiteboard.connectedUser.onRemove = (item, index) => {
-      phaserEvents.emit(Event.ITEM_USER_REMOVED, item, key, ItemType.WHITEBOARD)
+
+    // new instance added to the chatMessages ArraySchema
+    this.square.state.chatMessages.onAdd = (item, index) => {
+      store.dispatch(pushChatMessage(item))
     }
+
+    // when the server sends room data
+    this.square.onMessage(Message.SEND_ROOM_DATA, (content) => {
+      store.dispatch(setJoinedRoomData(content))
+    })
+
+    // when a user sends a message
+    this.square.onMessage(Message.ADD_CHAT_MESSAGE, ({ clientId, content }) => {
+      phaserEvents.emit(Event.UPDATE_DIALOG_BUBBLE, clientId, content)
+    })
+
+    // when a peer disconnects with myPeer
+    this.square.onMessage(Message.DISCONNECT_STREAM, (clientId: string) => {
+      this.webRTC?.deleteOnCalledVideoStream(clientId)
+    })
+
+    // when a computer user stops sharing screen
+    this.square.onMessage(Message.STOP_SCREEN_SHARE, (clientId: string) => {
+      const computerState = store.getState().computer
+      computerState.shareScreenManager?.onUserLeft(clientId)
+    })
   }
-
-  // new instance added to the chatMessages ArraySchema
-  this.room.state.chatMessages.onAdd = (item, index) => {
-    store.dispatch(pushChatMessage(item))
-  }
-
-  // when the server sends room data
-  this.room.onMessage(Message.SEND_ROOM_DATA, (content) => {
-    store.dispatch(setJoinedRoomData(content))
-  })
-
-  // when a user sends a message
-  this.room.onMessage(Message.ADD_CHAT_MESSAGE, ({ clientId, content }) => {
-    phaserEvents.emit(Event.UPDATE_DIALOG_BUBBLE, clientId, content)
-  })
-
-  // when a peer disconnects with myPeer
-  this.room.onMessage(Message.DISCONNECT_STREAM, (clientId: string) => {
-    this.webRTC?.deleteOnCalledVideoStream(clientId)
-  })
-
-  // when a computer user stops sharing screen
-  this.room.onMessage(Message.STOP_SCREEN_SHARE, (clientId: string) => {
-    const computerState = store.getState().computer
-    computerState.shareScreenManager?.onUserLeft(clientId)
-  })
-}
 
   // set up all network listeners before the game starts
   initialize() {
@@ -261,8 +258,7 @@ export default class Network {
           // when a new player finished setting up player name
           if (field === 'name' && value !== '') {
             phaserEvents.emit(Event.PLAYER_JOINED, player, key)
-          console.log('game init')
-
+            console.log('game init')
             store.dispatch(setPlayerNameMap({ id: key, name: value }))
             store.dispatch(pushPlayerJoinedMessage(value))
           }
@@ -336,7 +332,6 @@ export default class Network {
 
   // method to register event listener and call back function when a item user added
   onChatMessageAdded(callback: (playerId: string, content: string) => void, context?: any) {
-    console.log('onChatMessageAdded')
     phaserEvents.on(Event.UPDATE_DIALOG_BUBBLE, callback, context)
   }
 
@@ -358,19 +353,16 @@ export default class Network {
 
   // method to register event listener and call back function when a player joined
   onPlayerJoined(callback: (Player: IPlayer, key: string) => void, context?: any) {
-    console.log('onPlayerJoined')
     phaserEvents.on(Event.PLAYER_JOINED, callback, context)
   }
 
   // method to register event listener and call back function when a player left
   onPlayerLeft(callback: (key: string) => void, context?: any) {
-    console.log('onPlayerLeft')
     phaserEvents.on(Event.PLAYER_LEFT, callback, context)
   }
 
   // method to register event listener and call back function when myPlayer is ready to connect
   onMyPlayerReady(callback: (key: string) => void, context?: any) {
-    console.log('onMyPlayerReady')
     phaserEvents.on(Event.MY_PLAYER_READY, callback, context)
   }
 
@@ -384,79 +376,92 @@ export default class Network {
     callback: (field: string, value: number | string, key: string) => void,
     context?: any
   ) {
-    console.log('onPlayerUpdated')
     phaserEvents.on(Event.PLAYER_UPDATED, callback, context)
   }
 
   // method to send player updates to Colyseus server
   updatePlayer(currentX: number, currentY: number, currentAnim: string) {
-    this.room?.send(Message.UPDATE_PLAYER, { x: currentX, y: currentY, anim: currentAnim })
+    if (this.scene === 'game')
+      this.room?.send(Message.UPDATE_PLAYER, { x: currentX, y: currentY, anim: currentAnim })
+    else if (this.scene === 'square')
+      this.square?.send(Message.UPDATE_PLAYER, { x: currentX, y: currentY, anim: currentAnim })
   }
 
   // method to send player name to Colyseus server
   updatePlayerName(currentName: string) {
-    this.room?.send(Message.UPDATE_PLAYER_NAME, { name: currentName })
+    if (this.scene === 'game')
+      this.room?.send(Message.UPDATE_PLAYER_NAME, { name: currentName })
+    else if (this.scene === 'square')
+      this.square?.send(Message.UPDATE_PLAYER_NAME, { name: currentName })
   }
 
   // method to send ready-to-connect signal to Colyseus server
   readyToConnect() {
-    this.room?.send(Message.READY_TO_CONNECT)
+    if (this.scene === 'game')
+      this.room?.send(Message.READY_TO_CONNECT)
+    else if (this.scene === 'square')
+      this.square?.send(Message.READY_TO_CONNECT)
     phaserEvents.emit(Event.MY_PLAYER_READY)
   }
 
   // method to send ready-to-connect signal to Colyseus server
   videoConnected() {
-    this.room?.send(Message.VIDEO_CONNECTED)
+    if (this.scene === 'game')
+      this.room?.send(Message.VIDEO_CONNECTED)
+    else if (this.scene === 'square')
+      this.square?.send(Message.VIDEO_CONNECTED)
     phaserEvents.emit(Event.MY_PLAYER_VIDEO_CONNECTED)
   }
 
   // method to send stream-disconnection signal to Colyseus server
   playerStreamDisconnect(id: string) {
-    this.room?.send(Message.DISCONNECT_STREAM, { clientId: id })
+    if (this.scene === 'game')
+      this.room?.send(Message.DISCONNECT_STREAM, { clientId: id })
+    else if (this.scene === 'square')
+      this.square?.send(Message.DISCONNECT_STREAM, { clientId: id })
     this.webRTC?.deleteVideoStream(id)
   }
 
   connectToComputer(id: string) {
-    this.room?.send(Message.CONNECT_TO_COMPUTER, { computerId: id })
+    if (this.scene === 'game')
+      this.room?.send(Message.CONNECT_TO_COMPUTER, { computerId: id })
+    else if (this.scene === 'square')
+      this.square?.send(Message.CONNECT_TO_COMPUTER, { computerId: id })
   }
 
   disconnectFromComputer(id: string) {
-    this.room?.send(Message.DISCONNECT_FROM_COMPUTER, { computerId: id })
+    if (this.scene === 'game')
+      this.room?.send(Message.DISCONNECT_FROM_COMPUTER, { computerId: id })
+    else if (this.scene === 'square')
+      this.square?.send(Message.DISCONNECT_FROM_COMPUTER, { computerId: id })
   }
 
   connectToWhiteboard(id: string) {
-    this.room?.send(Message.CONNECT_TO_WHITEBOARD, { whiteboardId: id })
+    if (this.scene === 'game')
+      this.room?.send(Message.CONNECT_TO_WHITEBOARD, { whiteboardId: id })
+    else if (this.scene === 'square')
+      this.square?.send(Message.CONNECT_TO_WHITEBOARD, { whiteboardId: id })
   }
 
   disconnectFromWhiteboard(id: string) {
-    this.room?.send(Message.DISCONNECT_FROM_WHITEBOARD, { whiteboardId: id })
+    if (this.scene === 'game')
+      this.room?.send(Message.DISCONNECT_FROM_WHITEBOARD, { whiteboardId: id })
+    else if (this.scene === 'square')
+      this.square?.send(Message.DISCONNECT_FROM_WHITEBOARD, { whiteboardId: id })
   }
 
   onStopScreenShare(id: string) {
-    this.room?.send(Message.STOP_SCREEN_SHARE, { computerId: id })
+    if (this.scene === 'game')
+      this.room?.send(Message.STOP_SCREEN_SHARE, { computerId: id })
+    else if (this.scene === 'square')
+      this.square?.send(Message.STOP_SCREEN_SHARE, { computerId: id })
+
   }
 
   addChatMessage(content: string) {
-    this.room?.send(Message.ADD_CHAT_MESSAGE, { content: content })
+    if (this.scene === 'game')
+      this.room?.send(Message.ADD_CHAT_MESSAGE, { content: content })
+    else if (this.scene === 'square')
+      this.square?.send(Message.ADD_CHAT_MESSAGE, { content: content })
   }
-
-  // 로그인 정보 db조회를 위해 서버로 메시지 전송
-  // tryLogin(loginData: IUser) {
-  //   const { id, password, result, msg, code } = loginData
-  //   // let loginResult: boolean = false
-  //   this.client.joinOrCreate(RoomType.LOBBY)
-
-  //   //서버로 로그인 데이터 전송
-  //   this.lobby.send(Message.SEND_LOGIN_DATA,{
-  //     id: loginData.id,
-  //     password: loginData.password,
-  //     result: loginData.result
-  //   })
-  //   //서버에서 로그인 결과를 받음
-  //   this.lobby.onMessage(Message.SEND_LOGIN_RESULT,(message:{result: boolean})=>{
-  //     loginData.result = message.result
-  //   })
-
-  //   return loginData.result
-  // }
 }

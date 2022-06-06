@@ -39,16 +39,14 @@ function App() {
     } else if (openRoomTableDialog) {
       /* Render WhiteboardDialog if user is using a whiteboard. */
       ui = <RoomTableDialog />
-    } else if (openDoor) {
-      /* Render WhiteboardDialog if user is using a whiteboard. */
-      ui = <SquareDialog />
-    }else {
+    } else {
       ui = (
         /* Render Chat or VideoConnectionDialog if no dialogs are opened. */
         <>
           <Chat />
           {/* Render VideoConnectionDialog if user is not connected to a webcam. */}
           {!videoConnected && <VideoConnectionDialog />}
+          {openDoor ? <SquareDialog />:null}
         </>
       )
     }

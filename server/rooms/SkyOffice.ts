@@ -5,17 +5,17 @@ import { Player, OfficeState, Computer, Whiteboard } from './schema/OfficeState'
 import { Message } from '../../types/Messages'
 import { IRoomData } from '../../types/Rooms'
 import { whiteboardRoomIds } from './schema/OfficeState'
-import PlayerUpdateCommand from './commands/PlayerUpdateCommand'
-import PlayerUpdateNameCommand from './commands/PlayerUpdateNameCommand'
+import PlayerUpdateCommand from './commands/game/PlayerUpdateCommand'
+import PlayerUpdateNameCommand from './commands/game/PlayerUpdateNameCommand'
 import {
   ComputerAddUserCommand,
   ComputerRemoveUserCommand,
-} from './commands/ComputerUpdateArrayCommand'
+} from './commands/game/ComputerUpdateArrayCommand'
 import {
   WhiteboardAddUserCommand,
   WhiteboardRemoveUserCommand,
-} from './commands/WhiteboardUpdateArrayCommand'
-import ChatMessageUpdateCommand from './commands/ChatMessageUpdateCommand'
+} from './commands/game/WhiteboardUpdateArrayCommand'
+import ChatMessageUpdateCommand from './commands/game/ChatMessageUpdateCommand'
 
 export class SkyOffice extends Room<OfficeState> {
   private dispatcher = new Dispatcher(this)
@@ -106,7 +106,6 @@ export class SkyOffice extends Room<OfficeState> {
           y: message.y,
           anim: message.anim,
         })
-        console.log('game updateplayer')
       }
     )
 

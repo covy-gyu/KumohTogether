@@ -26,6 +26,7 @@ import phaserGame from '../PhaserGame'
 import Square from './Square'
 import Bootstrap from './Bootstrap'
 import { openDoor } from '../stores/DoorStore'
+import { phaserEvents } from '../events/EventCenter'
 
 export default class Game extends Phaser.Scene {
   network!: Network
@@ -40,6 +41,7 @@ export default class Game extends Phaser.Scene {
   computerMap = new Map<string, Computer>()
   private whiteboardMap = new Map<string, Whiteboard>()
   logInfo?: LogInfo
+  private location = 'game'
 
   constructor() {
     super('game')
@@ -67,7 +69,7 @@ export default class Game extends Phaser.Scene {
   enableKeys() {
     this.input.keyboard.enabled = true
   }
-
+  
   create(data: { network: Network , logInfo: LogInfo}) {
     console.log('create game')
     if (!data.network) {
@@ -183,14 +185,17 @@ export default class Game extends Phaser.Scene {
 
     // register network event listeners
     console.log('game: onPlayerJoined')
-    this.network.onPlayerJoined(this.handlePlayerJoined, this)
-    this.network.onPlayerLeft(this.handlePlayerLeft, this)
-    this.network.onMyPlayerReady(this.handleMyPlayerReady, this)
-    this.network.onMyPlayerVideoConnected(this.handleMyVideoConnected, this)
-    this.network.onPlayerUpdated(this.handlePlayerUpdated, this)
-    this.network.onItemUserAdded(this.handleItemUserAdded, this)
-    this.network.onItemUserRemoved(this.handleItemUserRemoved, this)
-    this.network.onChatMessageAdded(this.handleChatMessageAdded, this)
+    if(this.network.scene === 'game'){
+      this.network.onPlayerJoined(this.handlePlayerJoined, this)
+      this.network.onPlayerLeft(this.handlePlayerLeft, this)
+      this.network.onMyPlayerReady(this.handleMyPlayerReady, this)
+      this.network.onMyPlayerVideoConnected(this.handleMyVideoConnected, this)
+      this.network.onPlayerUpdated(this.handlePlayerUpdated, this)
+      this.network.onItemUserAdded(this.handleItemUserAdded, this)
+      this.network.onItemUserRemoved(this.handleItemUserRemoved, this)
+      this.network.onChatMessageAdded(this.handleChatMessageAdded, this)
+    }
+   
   }
   private async handleDoorOverlap(playerSelector, selectionItem) {
     const currentItem = playerSelector.selectedItem as Item
@@ -209,15 +214,24 @@ export default class Game extends Phaser.Scene {
     //await selectionItem.changeScene(this.network)
     const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
     const square = phaserGame.scene.keys.square as Square
+    phaserEvents.shutdown()
+
     this.network.joinOrCreateSquare()
     .then(() =>  this.scene.start('square',{
       network: this.network,
       logInfo: this.logInfo,
      }))
+     .then(()=>{setTimeout(() => {
+      store.dispatch(openDoor())
+    }, 1000);})
+    .then(()=>{setTimeout(() => {
+      this.scene.stop()
+      
+    }, 1000);})
     .catch((error) => console.error(error))
-     
-    //store.dispatch(openDoor())
     
+    // phaserEvents.removeAllListeners()
+     
   
     //this.network.onPlayerLeft(this.handlePlayerLeft, this)
   }

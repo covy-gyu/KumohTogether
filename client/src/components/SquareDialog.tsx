@@ -9,6 +9,7 @@ import phaserGame from '../PhaserGame'
 import Square from '../scenes/Square'
 import { useAppSelector } from '../hooks'
 import Game from '../scenes/Game'
+import { phaserEvents } from '../events/EventCenter'
 
 const Title = styled.h1`
   font-size: 50px;
@@ -24,11 +25,11 @@ export default function SquareDialog() {
   const game = phaserGame.scene.keys.game as Game
   
   let [ alert, alertSet ] = useState(true);
-  let [ inputData, inputDataSet ] = useState('');
   useEffect(()=>{
-    game.myPlayer.setPlayerName(userName)
-    game.myPlayer.setPlayerTexture(userAvatar)
-    game.network.readyToConnect()
+    square.myPlayer.setPlayerName(userName)
+    square.myPlayer.setPlayerTexture(userAvatar)
+    square.network.readyToConnect()
+    
     let timer = setTimeout(()=>{ 
       alertSet(false)
       
