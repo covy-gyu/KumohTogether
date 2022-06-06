@@ -9,6 +9,7 @@ import { RoomType } from '../types/Rooms'
 
 import { SkyOffice } from './rooms/SkyOffice'
 import { Lobby } from './rooms/Lobby'
+import { Square } from './rooms/Square'
 
 const port = Number(process.env.PORT || 2567)
 const app = express()
@@ -36,7 +37,7 @@ gameServer.define(RoomType.PUBLIC, SkyOffice, {
   password: null,
   autoDispose: false,
 })
-gameServer.define(RoomType.SQUARE, SkyOffice, {
+gameServer.define(RoomType.SQUARE, Square, {
   name: 'Kumoh Square',
   description: '🚩 여기는 디관앞, 금오광장입니다 💙',
   password: null,

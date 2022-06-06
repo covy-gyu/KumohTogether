@@ -1,8 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { useAppSelector } from '../hooks'
 
 import phaserGame from '../PhaserGame'
 import Bootstrap from '../scenes/Bootstrap'
 import Game from '../scenes/Game'
+import Square from '../scenes/Square'
 
 interface DoorState {
   doorOpen: boolean
@@ -17,23 +19,16 @@ const initialState: DoorState = {
 }
 
 export const doorSlice = createSlice({
+  
   name: 'door',
   initialState,
   reducers: {
-    openDoor: (state, action: PayloadAction<string>) => {
+    openDoor: (state) => {
       state.doorOpen = true
-      state.doorType = action.payload
+      const square = phaserGame.scene.keys.square as Square
       const game = phaserGame.scene.keys.game as Game
-      const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
-      switch (state.doorType) {
-        case 'square':
-          game.network.joinOrCreateSquare()
-          .then(() => bootstrap.launchSquare())
-          .catch((error) => console.error(error))
-          break;
-        default:
-          break;
-      }
+      square.registerKeys()
+      
     },
     // closeWhiteboardDialog: (state) => {
     //   const game = phaserGame.scene.keys.game as Game

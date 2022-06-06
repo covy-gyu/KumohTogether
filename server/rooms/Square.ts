@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import { Room, Client, ServerError } from 'colyseus'
 import { Dispatcher } from '@colyseus/command'
-import { Player, OfficeState, Computer, Whiteboard } from './schema/OfficeState'
+import { Player, Computer, Whiteboard, SquareState } from './schema/SquareState'
 import { Message } from '../../types/Messages'
 import { IRoomData } from '../../types/Rooms'
 import { whiteboardRoomIds } from './schema/OfficeState'
@@ -17,7 +17,7 @@ import {
 } from './commands/WhiteboardUpdateArrayCommand'
 import ChatMessageUpdateCommand from './commands/ChatMessageUpdateCommand'
 
-export class Square extends Room<OfficeState> {
+export class Square extends Room<SquareState> {
   private dispatcher = new Dispatcher(this)
   private name: string
   private description: string
@@ -37,7 +37,7 @@ export class Square extends Room<OfficeState> {
     }
     this.setMetadata({ name, description, hasPassword })
 
-    this.setState(new OfficeState())
+    this.setState(new SquareState())
 
     // HARD-CODED: Add 5 computers in a room
     for (let i = 0; i < 5; i++) {
@@ -106,6 +106,7 @@ export class Square extends Room<OfficeState> {
           y: message.y,
           anim: message.anim,
         })
+        console.log('square updateplayer')
       }
     )
 

@@ -13,7 +13,7 @@ import { InputAdornment, LinearProgress, TextField } from '@mui/material'
 import { IUser } from '../../../types/Users'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import store from '../stores'
-import { setLoggedSuccess } from '../stores/UserStore'
+import { setUserId } from '../stores/LogInfoStore'
 
 const Backdrop = styled.div`
   position: absolute;
@@ -100,7 +100,6 @@ export default function LoginLobbyDialog() {
     if (isValidPassword === pwFieldEmpty) setPwFieldEmpty(!pwFieldEmpty)
 
     if (isValidId && isValidPassword && lobbyJoined) {
-      dispatch(setLoggedSuccess(false))
       const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
  
       const login = false
@@ -111,6 +110,8 @@ export default function LoginLobbyDialog() {
             .joinOrCreatePublic()
             .then(() => bootstrap.launchGame())
             .catch((error) => console.error(error))
+
+          bootstrap.logInfo?.setUserId(values.id)
         }
       })
     }

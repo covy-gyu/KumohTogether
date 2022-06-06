@@ -22,6 +22,9 @@ import { getAvatarString, getColorByString } from '../util'
 
 import phaserGame from '../PhaserGame'
 import Game from '../scenes/Game'
+import { setUserAvatar, setUserName } from '../stores/LogInfoStore'
+import Bootstrap from '../scenes/Bootstrap'
+import store from '../stores'
 
 SwiperCore.use([Navigation])
 
@@ -151,12 +154,19 @@ export default function LoginDialog() {
   const roomName = useAppSelector((state) => state.room.roomName)
   const roomDescription = useAppSelector((state) => state.room.roomDescription)
   const game = phaserGame.scene.keys.game as Game
+  const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (name === '') {
       setNameFieldEmpty(true)
     } else if (roomJoined) {
+      // // //bootstrap.logInfo에 유저정보 저장
+      // bootstrap.logInfo.setUserName(name)
+      // bootstrap.logInfo.setUserAvatar(avatars[avatarIndex].name)
+
+      dispatch(setUserName(name))
+      dispatch(setUserAvatar(avatars[avatarIndex].name))
       console.log('참가! 이름:', name, '아바타:', avatars[avatarIndex].name)
       game.registerKeys()
       game.myPlayer.setPlayerName(name)

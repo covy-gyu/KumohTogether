@@ -29,8 +29,9 @@ import {
 } from '../stores/ChatStore'
 import { setWhiteboardUrls } from '../stores/WhiteboardStore'
 import { openDoor } from '../stores/DoorStore'
+import Network from './Network'
 
-export default class Network {
+export default class gNetwork extends Network {
   private client: Client
   private room?: Room<IOfficeState>
   private lobby!: Room<ILobbyState>
@@ -42,6 +43,7 @@ export default class Network {
   private protocol: string
   private endpoint: string
   constructor() {
+    super()
     this.protocol = window.location.protocol.replace('http', 'ws')
     this.endpoint =
       process.env.NODE_ENV === 'production'

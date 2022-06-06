@@ -21,8 +21,11 @@ import { ItemType } from '../../../types/Items'
 import store from '../stores'
 import { setFocused, setShowChat } from '../stores/ChatStore'
 import Door from '../items/Door'
+import LogInfo from '../services/LogInfo'
 import phaserGame from '../PhaserGame'
+import Square from './Square'
 import Bootstrap from './Bootstrap'
+import { openDoor } from '../stores/DoorStore'
 
 export default class Game extends Phaser.Scene {
   network!: Network
@@ -36,6 +39,7 @@ export default class Game extends Phaser.Scene {
   private otherPlayerMap = new Map<string, OtherPlayer>()
   computerMap = new Map<string, Computer>()
   private whiteboardMap = new Map<string, Whiteboard>()
+  logInfo?: LogInfo
 
   constructor() {
     super('game')
@@ -64,7 +68,8 @@ export default class Game extends Phaser.Scene {
     this.input.keyboard.enabled = true
   }
 
-  create(data: { network: Network }) {
+  create(data: { network: Network , logInfo: LogInfo}) {
+    console.log('create game')
     if (!data.network) {
       throw new Error('server instance missing')
     } else {
@@ -80,7 +85,9 @@ export default class Game extends Phaser.Scene {
     groundLayer.setCollisionByProperty({ collides: true })
 
     // debugDraw(groundLayer, this)
-
+    // 캐릭터 생성
+    // this.myPlayer = this.add.myPlayer(705, 500, 'adam', this.network.mySessionId)
+    console.log('game: player생성')
     this.myPlayer = this.add.myPlayer(705, 500, 'adam', this.network.mySessionId)
     this.playerSelector = new PlayerSelector(this, 0, 0, 16, 16)
 
@@ -175,6 +182,7 @@ export default class Game extends Phaser.Scene {
     ) 
 
     // register network event listeners
+    console.log('game: onPlayerJoined')
     this.network.onPlayerJoined(this.handlePlayerJoined, this)
     this.network.onPlayerLeft(this.handlePlayerLeft, this)
     this.network.onMyPlayerReady(this.handleMyPlayerReady, this)
@@ -184,7 +192,7 @@ export default class Game extends Phaser.Scene {
     this.network.onItemUserRemoved(this.handleItemUserRemoved, this)
     this.network.onChatMessageAdded(this.handleChatMessageAdded, this)
   }
-  private handleDoorOverlap(playerSelector, selectionItem) {
+  private async handleDoorOverlap(playerSelector, selectionItem) {
     const currentItem = playerSelector.selectedItem as Item
     // currentItem is undefined if nothing was perviously selected
     if (currentItem) {
@@ -198,8 +206,20 @@ export default class Game extends Phaser.Scene {
     // set selected item and set up new dialog
     playerSelector.selectedItem = selectionItem
     // selectionItem.onOverlapDialog()
-    selectionItem.changeScene(this.network)
-
+    //await selectionItem.changeScene(this.network)
+    const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
+    const square = phaserGame.scene.keys.square as Square
+    this.network.joinOrCreateSquare()
+    .then(() =>  this.scene.start('square',{
+      network: this.network,
+      logInfo: this.logInfo,
+     }))
+    .catch((error) => console.error(error))
+     
+    //store.dispatch(openDoor())
+    
+  
+    //this.network.onPlayerLeft(this.handlePlayerLeft, this)
   }
 
   private handleItemSelectorOverlap(playerSelector, selectionItem) {
@@ -253,6 +273,7 @@ export default class Game extends Phaser.Scene {
 
   // function to add new player to the otherPlayer group
   private handlePlayerJoined(newPlayer: IPlayer, id: string) {
+    console.log('game : player joined')
     const otherPlayer = this.add.otherPlayer(newPlayer.x, newPlayer.y, 'adam', id, newPlayer.name)
     this.otherPlayers.add(otherPlayer)
     this.otherPlayerMap.set(id, otherPlayer)

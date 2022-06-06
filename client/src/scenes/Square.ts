@@ -17,6 +17,8 @@ import { ItemType } from '../../../types/Items'
 
 import store from '../stores'
 import { setFocused, setShowChat } from '../stores/ChatStore'
+import LogInfo from '../services/LogInfo'
+import { logInfoSlice } from '../stores/LogInfoStore'
 
 export default class Square extends Phaser.Scene {
   network!: Network
@@ -28,6 +30,7 @@ export default class Square extends Phaser.Scene {
   private playerSelector!: Phaser.GameObjects.Zone
   private otherPlayers!: Phaser.Physics.Arcade.Group
   private otherPlayerMap = new Map<string, OtherPlayer>()
+  logInfo!: LogInfo
 
   constructor() {
     super('square')
@@ -56,13 +59,13 @@ export default class Square extends Phaser.Scene {
     this.input.keyboard.enabled = true
   }
 
-  create(data: { network: Network }) {
+  create(data: { network: Network , logInfo: LogInfo}) {
+    console.log('create square')
     if (!data.network) {
-      throw new Error('server instance missing')
+      throw new Error('server instance: network missing')
     } else {
       this.network = data.network
     }
-
     createCharacterAnims(this.anims)
 
     this.map = this.make.tilemap({ key: 'tilemap' })
@@ -73,7 +76,7 @@ export default class Square extends Phaser.Scene {
 
     // debugDraw(groundLayer, this)
 
-    this.myPlayer = this.add.myPlayer(705, 500, 'adam', this.network.mySessionId)
+    this.myPlayer = this.add.myPlayer(705, 500, "adam", this.network.mySessionId)
     this.playerSelector = new PlayerSelector(this, 0, 0, 16, 16)
 
     // import other objects from Tiled map to Phaser
@@ -102,6 +105,7 @@ export default class Square extends Phaser.Scene {
 
     // register network event listeners
     this.network.onPlayerJoined(this.handlePlayerJoined, this)
+    console.log('onplayerjoined_square')
     this.network.onPlayerLeft(this.handlePlayerLeft, this)
     this.network.onMyPlayerReady(this.handleMyPlayerReady, this)
     this.network.onMyPlayerVideoConnected(this.handleMyVideoConnected, this)

@@ -11,6 +11,7 @@ import VideoConnectionDialog from './components/VideoConnectionDialog'
 import Chat from './components/Chat'
 import HelperButtonGroup from './components/HelperButtonGroup'
 import RoomTableDialog from './components/RoomTableDialog'
+import SquareDialog from './components/SquareDialog'
 
 const Backdrop = styled.div`
   position: absolute;
@@ -25,6 +26,7 @@ function App() {
   const openRoomTableDialog = useAppSelector((state) => state.privateRoom.roomTableDialogOpen)
   const videoConnected = useAppSelector((state) => state.user.videoConnected)
   const roomJoined = useAppSelector((state) => state.room.roomJoined)
+  const openDoor = useAppSelector((state) => state.door.doorOpen)
 
   let ui: JSX.Element
   if (loggedIn) {
@@ -37,7 +39,10 @@ function App() {
     } else if (openRoomTableDialog) {
       /* Render WhiteboardDialog if user is using a whiteboard. */
       ui = <RoomTableDialog />
-    } else {
+    } else if (openDoor) {
+      /* Render WhiteboardDialog if user is using a whiteboard. */
+      ui = <SquareDialog />
+    }else {
       ui = (
         /* Render Chat or VideoConnectionDialog if no dialogs are opened. */
         <>

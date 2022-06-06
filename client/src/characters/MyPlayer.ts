@@ -29,6 +29,12 @@ export default class MyPlayer extends Player {
     super(scene, x, y, texture, id, frame)
     this.playContainerBody = this.playerContainer.body as Phaser.Physics.Arcade.Body
   }
+  destroy(fromScene?:boolean){
+    this.playerContainer.destroy()
+
+    super.destroy(fromScene)
+    console.log('player destroy')
+  }
 
   setPlayerName(name: string) {
     this.playerName.setText(name)
@@ -53,12 +59,12 @@ export default class MyPlayer extends Player {
 
     const item = playerSelector.selectedItem
 
-    if(item?.itemType === ItemType.DOOR){
-      const door = item as Door
-      console.log('touch')
-      door.changeScene(network)
+    // if(item?.itemType === ItemType.DOOR){
+    //   const door = item as Door
+    //   console.log('touch')
+    //   door.changeScene(network)
       
-    }
+    // }
 
     if (Phaser.Input.Keyboard.JustDown(keyR)) {
       switch (item?.itemType) {

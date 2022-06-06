@@ -3,9 +3,11 @@ import Network from '../services/Network'
 import { BackgroundMode } from '../../../types/BackgroundMode'
 import store from '../stores'
 import { setRoomJoined } from '../stores/RoomStore'
+import LogInfo from '../services/LogInfo'
 
 export default class Bootstrap extends Phaser.Scene {
   network!: Network
+  logInfo!: LogInfo
 
   constructor() {
     super('bootstrap')
@@ -83,6 +85,7 @@ export default class Bootstrap extends Phaser.Scene {
 
   init() {
     this.network = new Network()
+    this.logInfo = new LogInfo()
   }
 
   create() {
@@ -95,18 +98,18 @@ export default class Bootstrap extends Phaser.Scene {
 
   launchGame() {
     this.network.webRTC?.checkPreviousPermission()
-    this.scene.launch('game', {
+    this.scene.start('game', {
       network: this.network,
+      logInfo: this.logInfo,
     })
-
     // update Redux state
     store.dispatch(setRoomJoined(true))
   }
   launchSquare(){
-    this.network.webRTC?.checkPreviousPermission()
     //룸타입검사해서 해당 씬에 맞게 출력되도록 하기
-    this.scene.launch('square',{
+    this.scene.start('square',{
      network: this.network,
+     logInfo: this.logInfo,
     })
   }
 

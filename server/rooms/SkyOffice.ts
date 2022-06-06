@@ -106,6 +106,7 @@ export class SkyOffice extends Room<OfficeState> {
           y: message.y,
           anim: message.anim,
         })
+        console.log('game updateplayer')
       }
     )
 
