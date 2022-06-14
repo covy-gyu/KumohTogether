@@ -1,4 +1,4 @@
-import React from 'react'
+import React ,{useState}from 'react'
 import styled from 'styled-components'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
@@ -89,7 +89,8 @@ export default function ComputerDialog() {
   const shareScreenManager = useAppSelector((state) => state.computer.shareScreenManager)
   const myStream = useAppSelector((state) => state.computer.myStream)
   const peerStreams = useAppSelector((state) => state.computer.peerStreams)
-
+  const url = useAppSelector((state) => state.computer.url)
+  const [click, setClick] = useState(false)
   return (
     <Backdrop>
       <Wrapper>
@@ -106,7 +107,7 @@ export default function ComputerDialog() {
             variant="contained"
             color="secondary"
             onClick={() => {
-              if (shareScreenManager?.myStream) {
+              if (shareScreenManager?.myStream) { 
                 shareScreenManager?.stopScreenShare()
               } else {
                 shareScreenManager?.startScreenShare()
@@ -115,6 +116,13 @@ export default function ComputerDialog() {
           >
             {shareScreenManager?.myStream ? 'Stop sharing' : 'Share Screen'}
           </Button>
+          {!click&&shareScreenManager?.myStream ?  <Button variant="contained"
+            color="secondary" onClick={() => {shareScreenManager.startRec
+            ();setClick(true);}}>녹화</Button>:<div></div>}
+            {click&& shareScreenManager?.myStream ?  <Button variant="contained"
+            color="secondary" onClick={() => {shareScreenManager.endRec();setClick(false)}}>중단</Button>:<div></div>}
+            {shareScreenManager?.myStream ?  <a id="download" href={url} download="test.webm" >Download</a>:<div></div>}
+            
         </div>
 
         <VideoGrid>

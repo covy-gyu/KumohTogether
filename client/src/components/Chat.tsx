@@ -17,6 +17,7 @@ import Game from '../scenes/Game'
 import { getColorByString } from '../util'
 import { useAppDispatch, useAppSelector } from '../hooks'
 import { MessageType, setFocused, setShowChat } from '../stores/ChatStore'
+import Square from '../scenes/Square'
 
 const Backdrop = styled.div`
   position: fixed;
@@ -168,8 +169,11 @@ export default function Chat() {
   const chatMessages = useAppSelector((state) => state.chat.chatMessages)
   const focused = useAppSelector((state) => state.chat.focused)
   const showChat = useAppSelector((state) => state.chat.showChat)
+  const location = useAppSelector((state)=> state.chat.location)
+  const userlocation = useAppSelector((state)=> state.logInfo.userLocation)
   const dispatch = useAppDispatch()
   const game = phaserGame.scene.keys.game as Game
+  const square = phaserGame.scene.keys.square as Square
 
   const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
     setInputValue(event.currentTarget.value)
@@ -191,8 +195,15 @@ export default function Chat() {
     const val = inputValue.trim()
     setInputValue('')
     if (val) {
-      game.network.addChatMessage(val)
-      game.myPlayer.updateDialogBubble(val)
+      if(location==='digital'){
+        game.network.addChatMessage(val)
+        game.myPlayer.updateDialogBubble(val)
+      }
+      else if(location==='square')
+      {
+        square.network.addChatMessage(val)
+        square.myPlayer.updateDialogBubble(val)
+      }
     }
   }
 

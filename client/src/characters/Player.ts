@@ -66,8 +66,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     // preprocessing for dialog bubble text (maximum 70 characters)
     const dialogBubbleText = content.length <= 70 ? content : content.substring(0, 70).concat('...')
-
-    const innerText = this.scene.add
+    console.log('chat')
+    const innerText = this.scene?.add
       .text(0, 0, dialogBubbleText, { wordWrap: { width: 165, useAdvancedWrap: true } })
       .setFontFamily('Arial')
       .setFontSize(12)

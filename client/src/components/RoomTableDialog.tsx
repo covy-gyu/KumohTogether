@@ -62,6 +62,7 @@ const BackButtonWrapper = styled.div`
 
 export default function RoomTableDialog() {
   const dispatch = useAppDispatch()
+  const [showCustomRoom, setShowCustomRoom] = useState(false)
   const [showCreateRoomForm, setShowCreateRoomForm] = useState(false)
   const [showRoomTable, setShowRoomTable] = useState(false)
   const [showSnackbar, setShowSnackbar] = useState(false)

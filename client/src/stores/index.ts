@@ -8,6 +8,7 @@ import roomReducer from './RoomStore'
 import pRoomReducer from './PrivateRoomStore'
 import doorReducer from './DoorStore'
 import LogInfoReducer from './LogInfoStore'
+import PersonalReducer from './PersonalStore'
 
 
 enableMapSet()
@@ -22,6 +23,7 @@ const store = configureStore({
     privateRoom: pRoomReducer,
     door: doorReducer,
     logInfo: LogInfoReducer,
+    personal:PersonalReducer,
   },
   // Temporary disable serialize check for redux as we store MediaStream in ComputerStore.
   // https://stackoverflow.com/a/63244831

@@ -3,19 +3,21 @@ import { useAppSelector } from '../hooks'
 
 import phaserGame from '../PhaserGame'
 import Bootstrap from '../scenes/Bootstrap'
+import ClassRoom from '../scenes/ClassRoom'
+import Conference from '../scenes/Conference'
 import Game from '../scenes/Game'
 import Square from '../scenes/Square'
 
 interface DoorState {
   doorOpen: boolean
   doorType: null | string
-  doorUrl: null | string
+  doorLocation: string
 }
 
 const initialState: DoorState = {
   doorOpen: false,
   doorType: null,
-  doorUrl: null,
+  doorLocation: '',
 }
 
 export const doorSlice = createSlice({
@@ -23,12 +25,39 @@ export const doorSlice = createSlice({
   name: 'door',
   initialState,
   reducers: {
-    openDoor: (state) => {
+    openSquare: (state) => {
       state.doorOpen = true
       const square = phaserGame.scene.keys.square as Square
-      const game = phaserGame.scene.keys.game as Game
+      
       square.registerKeys()
       
+    },
+    openDigital: (state) => {
+      state.doorOpen = true
+      const game = phaserGame.scene.keys.game as Game
+      
+      game.registerKeys()
+      
+    },
+    openClass: (state) => {
+      state.doorOpen = true
+      const classRoom = phaserGame.scene.keys.classRoom as ClassRoom
+      
+      classRoom.registerKeys()
+      
+    },
+    openConfer: (state) => {
+      state.doorOpen = true
+      const conference = phaserGame.scene.keys.conference as Conference
+      
+      conference.registerKeys()
+      
+    },
+    closeDoor: (state) => {
+      state.doorOpen = false
+    },
+    setDoorLocation: (state, action: PayloadAction<string>) => {
+      state.doorLocation = action.payload
     },
     // closeWhiteboardDialog: (state) => {
     //   const game = phaserGame.scene.keys.game as Game
@@ -47,7 +76,14 @@ export const doorSlice = createSlice({
   },
 })
 
-export const { openDoor } =
+export const { 
+  openSquare,
+  openDigital,
+  setDoorLocation,
+  closeDoor,
+  openClass,
+  openConfer,
+ } =
   doorSlice.actions
 
 export default doorSlice.reducer

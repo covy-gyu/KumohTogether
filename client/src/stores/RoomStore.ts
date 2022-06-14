@@ -16,6 +16,7 @@ const isCustomRoom = (room: RoomInterface) => {
 export const roomSlice = createSlice({
   name: 'room',
   initialState: {
+    isClass: false,
     lobbyJoined: false,
     roomJoined: false,
     roomId: '',
@@ -55,6 +56,9 @@ export const roomSlice = createSlice({
     removeAvailableRooms: (state, action: PayloadAction<string>) => {
       state.availableRooms = state.availableRooms.filter((room) => room.roomId !== action.payload)
     },
+    setIsClass: (state, action: PayloadAction<boolean>) => {
+      state.isClass = action.payload
+    },
   },
 })
 
@@ -65,6 +69,7 @@ export const {
   setAvailableRooms,
   addAvailableRooms,
   removeAvailableRooms,
+  setIsClass,
 } = roomSlice.actions
 
 export default roomSlice.reducer

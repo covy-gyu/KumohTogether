@@ -22,6 +22,7 @@ export interface IChatMessage extends Schema {
   author: string
   createdAt: number
   content: string
+  location: string
 }
 
 export interface ISquareState extends Schema {

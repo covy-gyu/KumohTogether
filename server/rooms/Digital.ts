@@ -17,7 +17,7 @@ import {
 } from './commands/game/WhiteboardUpdateArrayCommand'
 import ChatMessageUpdateCommand from './commands/game/ChatMessageUpdateCommand'
 
-export class SkyOffice extends Room<OfficeState> {
+export class Digital extends Room<OfficeState> {
   private dispatcher = new Dispatcher(this)
   private name: string
   private description: string

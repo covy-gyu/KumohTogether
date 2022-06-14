@@ -1,9 +1,14 @@
 import Peer from 'peerjs'
 import store from '../stores'
-import { setMyStream, addVideoStream, removeVideoStream } from '../stores/ComputerStore'
+import { setMyStream, addVideoStream, removeVideoStream, setUrl } from '../stores/ComputerStore'
 import phaserGame from '../PhaserGame'
 import Game from '../scenes/Game'
-
+let blobs;
+    let blob;
+    let rec;let stream;
+    let voiceStream;
+    let desktopStream;
+    let streamq;
 export default class ShareScreenManager {
   private myPeer: Peer
   myStream?: MediaStream
@@ -43,8 +48,33 @@ export default class ShareScreenManager {
   private makeId(id: string) {
     return `${id.replace(/[^0-9a-z]/gi, 'G')}-ss`
   }
-
-  startScreenShare() {
+   mergeAudioStreams = (desktopStream, voiceStream) => {
+    const context = new AudioContext();
+    const destination = context.createMediaStreamDestination();
+    let hasDesktop = false;
+    let hasVoice = false;
+    if (desktopStream && desktopStream.getAudioTracks().length > 0) {
+      // If you don't want to share Audio from the desktop it should still work with just the voice.
+      const source1 = context.createMediaStreamSource(desktopStream);
+      const desktopGain = context.createGain();
+      desktopGain.gain.value = 0.7;
+      source1.connect(desktopGain).connect(destination);
+      hasDesktop = true;
+    }
+    
+    if (voiceStream && voiceStream.getAudioTracks().length > 0) {
+      const source2 = context.createMediaStreamSource(voiceStream);
+      const voiceGain = context.createGain();
+      voiceGain.gain.value = 0.7;
+      source2.connect(voiceGain).connect(destination);
+      hasVoice = true;
+    }
+      
+    return (hasDesktop || hasVoice) ? destination.stream.getAudioTracks() : [];
+  };
+  async startScreenShare() {
+    voiceStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        console.log("asa:"+voiceStream)
     navigator.mediaDevices
       ?.getDisplayMedia({
         video: true,
@@ -53,16 +83,30 @@ export default class ShareScreenManager {
       .then((stream) => {
         // Detect when user clicks "Stop sharing" outside of our UI.
         // https://stackoverflow.com/a/25179198
+        
         const track = stream.getVideoTracks()[0]
-        if (track) {
-          track.onended = () => {
-            this.stopScreenShare()
-          }
-        }
-
-        this.myStream = stream
-        store.dispatch(setMyStream(stream))
-
+        const tracks = [
+          ...stream.getVideoTracks(), 
+          ...this.mergeAudioStreams(stream, voiceStream)
+        ];
+        // if (track) {
+        //   track.onended = () => {
+        //     this.stopScreenShare()
+        //   }
+        // }
+        streamq = new MediaStream(tracks);
+        this.myStream = streamq
+        store.dispatch(setMyStream(streamq))
+        blobs = [];
+        rec = new MediaRecorder(streamq, {mimeType: 'video/webm; codecs=vp8,opus'});
+        rec.ondataavailable = (e) => blobs.push(e.data);
+        rec.onstop = async () => {
+          
+          //blobs.push(MediaRecorder.requestData());
+          blob = new Blob(blobs, {type: 'video/webm'});
+          let url = window.URL.createObjectURL(blob);
+          store.dispatch(setUrl(url));
+        };
         // Call all existing users.
         const game = phaserGame.scene.keys.game as Game
         const computerItem = game.computerMap.get(store.getState().computer.computerId!)
@@ -73,7 +117,12 @@ export default class ShareScreenManager {
         }
       })
   }
-
+  startRec() {
+    rec.start();
+  }
+  endRec() {
+    rec.stop();
+  }
   // TODO(daxchen): Fix this trash hack, if we call store.dispatch here when calling
   // from onClose, it causes redux reducer cycle, this may be fixable by using thunk
   // or something.

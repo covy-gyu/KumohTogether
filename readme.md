@@ -60,26 +60,26 @@ You'll need [Node.js](https://nodejs.org/en/), [npm](https://www.npmjs.com/) ins
 Clone this repository to your local machine:
 
 ```bash
-git clone https://github.com/kevinshen56714/SkyOffice.git
+git clone https://github.com/gozldwnd1eo/KumohTogether.git
 ```
 
-This will create a folder named `SkyOffice`. You can specify a different folder name like this:
+This will create a folder named `KumohTogether`. You can specify a different folder name like this:
 
 ```bash
-git clone https://github.com/kevinshen56714/SkyOffice.git my-folder-name
+git clone https://github.com/gozldwnd1eo/KumohTogether.git my-folder-name
 ```
 
 To start a server, go into the project folder and install dependencies/run start command:
 
 ```bash
-cd SkyOffice or 'my-folder-name'
+cd KumohTogether or 'my-folder-name'
 npm install && npm run start
 ```
 
 To start a client, go into the client folder and install dependencies/run start command:
 
 ```bash
-cd SkyOffice/client or 'my-folder-name/client'
+cd KumohTogether/client or 'my-folder-name/client'
 npm install && npm run start
 ```
 

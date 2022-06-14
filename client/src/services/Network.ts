@@ -2,6 +2,9 @@ import { Client, Room } from 'colyseus.js'
 import { IComputer, IOfficeState, IPlayer, IWhiteboard } from '../../../types/IOfficeState'
 import { ISquareState } from '../../../types/ISquareState'
 import { ILobbyState } from '../../../types/ILobbyState'
+import { IRegisterMem } from '../../../types/IRegisterMem'
+import { IPostState } from '../../../types/IPostState'
+import { ILectureVideoListState } from '../../../types/ILectureVideoListState';
 import { Message } from '../../../types/Messages'
 import { IRoomData, RoomType } from '../../../types/Rooms'
 import { ItemType } from '../../../types/Items'
@@ -28,13 +31,21 @@ import {
   pushPlayerLeftMessage,
 } from '../stores/ChatStore'
 import { setWhiteboardUrls } from '../stores/WhiteboardStore'
-import { openDoor } from '../stores/DoorStore'
+import { openSquare } from '../stores/DoorStore'
+import { IPost } from '../../../types/Post'
+import { IComment } from '../../../types/Comment'
+import { IMember } from '../../../types/Members'
+import { IMemberModi } from '../../../types/MemberModi'
+import { ILectureVideo } from '../../../types/LectureVideo'
 
 export default class Network {
   private client: Client
   private room?: Room<IOfficeState>
   private lobby!: Room<ILobbyState>
   private square?: Room<ISquareState>
+  private registerLobby!: Room<IRegisterMem>
+  private postLobby!: Room<IPostState>
+  private lectureVideoLobby!: Room<ILectureVideoListState>
   scene!: string
   webRTC?: WebRTC
 
@@ -53,7 +64,7 @@ export default class Network {
     this.joinLobbyRoom().then(() => {
       store.dispatch(setLobbyJoined(true))
     })
-
+ 
 
   }
   setInit() {
@@ -84,6 +95,10 @@ export default class Network {
   async joinOrCreatePublic() {
     this.scene = 'game'
     this.room = await this.client.joinOrCreate(RoomType.PUBLIC)
+    this.client = new Client(this.endpoint)
+    this.mySessionId = this.room.sessionId
+    store.dispatch(setSessionId(this.room.sessionId))
+    this.webRTC = new WebRTC(this.mySessionId, this)
     this.initialize()
   }
 
@@ -115,10 +130,11 @@ export default class Network {
       autoDispose,
     })
     this.initialize()
+
   }
 
   // 로그인 정보 db조회를 위해 서버로 메시지 전송
-  async tryLogin(loginData: IUser, callback: (loginSuccess: boolean) => void) {
+  async tryLogin(loginData: IUser, callback: (logindata:string,loginSuccess: boolean) => void) {
     const { id, password, result, msg, code } = loginData
     // let loginResult: boolean = false
     this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
@@ -130,25 +146,366 @@ export default class Network {
       result: loginData.result,
     })
     //서버에서 로그인 결과를 받음
-    this.lobby.onMessage(Message.SEND_LOGIN_RESULT, (message: { result: boolean }) => {
+    this.lobby.onMessage(Message.SEND_LOGIN_RESULT, (message: {identi:string, result: boolean }) => {
       console.log('클라: 로그인 결과: ' + message.result)
       if (message.result === true) {
         store.dispatch(setLoggedSuccess(true))
-        callback(message.result)
+        callback(message.identi,message.result)
       }
     })
   }
-
+  async modifyUser(modifyUserData: IMemberModi, callback:(modifySuccess:boolean)=>void) {
+    console.log("modifyUser");
+    const { id, member_id, member_identification, member_name, member_nick,department_name } = modifyUserData
+    // let loginResult: boolean = false
+    this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
+    console.log(modifyUserData);
+    //서버로 로그인 데이터 전송
+    this.lobby.send(Message.REQ_USER_MODI, {
+      id: modifyUserData.id,
+      member_id: modifyUserData.member_id,
+      member_identification: modifyUserData.member_identification,
+      member_name: modifyUserData.member_name,
+      member_nick: modifyUserData.member_nick,
+      department_name: modifyUserData.department_name
+  
+    })
+    this.lobby.onMessage(Message.RES_USER_MODI, (message) => {
+      console.log(message)
+      callback(message)
+    })
+    
+  }
+  async registerMember(registerData: IMember, callback:(registerSuccess:boolean)=>void) {
+    console.log("in");
+    const { id, password, identification, name, nickname,socialNum,department } = registerData
+    // let loginResult: boolean = false
+    this.registerLobby = await this.client.joinOrCreate(RoomType.REGISTERLOBBY)
+    console.log(registerData);
+    //서버로 로그인 데이터 전송
+    this.registerLobby.send(Message.SEND_MEM_REGISTER_DATA, {
+      id: registerData.id,
+      password: registerData.password,
+      identification: registerData.identification,
+      name: registerData.name,
+      nickname: registerData.nickname,
+      socialNum: registerData.socialNum,
+      department: registerData.department,
+  
+    })
+    this.registerLobby.onMessage(Message.SEND_MEM_REGISTER_Result, (message) => {
+      console.log(message.result)
+      if (message.result === true) {
+        callback(message.result)
+      }
+    })
+    
+  }
+  async disPlayDepart(callback:(getUsersResult:any)=>void) {
+    console.log('disPlayDepart')
+    this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
+     //서버로 로그인 데이터 전송
+     this.lobby.send(Message.REQ_DEPART_LIST,{})
+     this.lobby.onMessage(Message.RES_DEPART_LIST, (message) => {
+       console.log(message)
+       callback(message)
+     })
+   }
+  async getUsers(callback:(getUsersResult:any)=>void) {
+    console.log('getUsers')
+    this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
+     //서버로 로그인 데이터 전송
+     this.lobby.send(Message.REQ_USER_lIST,{})
+     this.lobby.onMessage(Message.RES_USER_lIST, (message) => {
+       console.log(message)
+       callback(message)
+     })
+   }
+   
+   async getOneMember(getOneMemberData: number,callback:(getOneMemberResult:any)=>void) {
+    console.log('getOneMember')
+    this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
+     //서버로 로그인 데이터 전송
+     this.lobby.send(Message.REQ_USER_ONE,{
+      userid: getOneMemberData
+     })
+     this.lobby.onMessage(Message.RES_USER_ONE, (message) => {
+       console.log(message)
+       callback(message)
+     })
+     
+   }
+   async deleteUser(deleteUserData: number,callback:(getUsersResult:any)=>void) {
+    console.log('deleteUser')
+    this.lobby = await this.client.joinOrCreate(RoomType.LOBBY)
+     //서버로 로그인 데이터 전송
+     this.lobby.send(Message.REQ_USER_DELETE,{
+      userid: deleteUserData
+     })
+     this.lobby.onMessage(Message.RES_USER_DELETE, (message) => {
+       console.log(message)
+       callback(message)
+     })
+     
+   }
+  async getPosts(callback:(postResult:any)=>void) {
+   console.log('getPostsclient')
+   this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+    //서버로 로그인 데이터 전송
+    this.postLobby.send(Message.SEND_POSTS_REQUEST,{})
+    this.postLobby.onMessage(Message.SEND_POSTS_RESPONSE, (message) => {
+      console.log(message)
+      callback(message)
+    })
+    
+  }
+  async dump(callback:(dumpResult:any)=>void) {
+    console.log('dump')
+    this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+     //서버로 로그인 데이터 전송
+     this.postLobby.send(Message.DUMP_IN,{})
+     this.postLobby.onMessage(Message.DUMP_OUT, (message) => {
+       callback(message)
+     })
+     
+   }
+  async getOneComment(commentId: number, callback:(getOneCommentResult:any)=>void) {
+    console.log('getOneComment')
+    console.log(commentId)
+    this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+     //서버로 로그인 데이터 전송
+     this.postLobby.send(Message.REQ_COMMENT_ONE,{
+      commentId: commentId
+     })
+     this.postLobby.onMessage(Message.RES_COMMENT_ONE, (message) => {
+       console.log("RES_COMMENT_ONE")
+       console.log(message)
+       callback(message)
+     })
+     
+   }
+  async getOnePost(rpostId: number, callback:(getOnePostResult:any)=>void) {
+    console.log('getOnePost')
+    console.log("hghg")
+    this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+     //서버로 로그인 데이터 전송
+     this.postLobby.send(Message.REQ_POST_ONE,{
+      postId: rpostId
+     })
+     this.postLobby.onMessage(Message.RES_POST_ONE, (message) => {
+       console.log("RES_POST_ONE")
+       callback(message)
+     })
+     
+   }
+  async registerPost(registerPostData: IPost,callback:(registerSuccess:boolean)=>void) {
+   console.log('registerPost')
+   console.log(registerPostData)
+   this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+    //서버로 로그인 데이터 전송
+    this.postLobby.send(Message.REQ_POSTS_REGISTER,{
+      memberId: registerPostData.memberId,
+      title: registerPostData.title,
+      content: registerPostData.content,
+      isNoti: registerPostData.isNoti,
+    })
+    this.postLobby.onMessage(Message.RES_POSTS_REGISTER, (message) => {
+      console.log(message)
+      callback(message)
+    })
+    
+  }
+  async registerComment(registerCommentData: IComment,callback:(registerSuccess:boolean)=>void) {
+    console.log('registerComment')
+    console.log(registerCommentData)
+    this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+     //서버로 로그인 데이터 전송
+     this.postLobby.send(Message.REQ_COMMENT_REGISTER,{
+      user_id: registerCommentData.user_id,
+       content: registerCommentData.content,
+       post_id: registerCommentData.post_id,
+     })
+     this.postLobby.onMessage(Message.RES_COMMENT_REGISTER, (message) => {
+       console.log(message)
+       callback(message)
+     })
+     
+   }
+   async displayComment(displayCommentData: number,callback:(registerSuccess:any)=>void) {
+    console.log('displayComment')
+    console.log(displayCommentData)
+    this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+     //서버로 로그인 데이터 전송
+     this.postLobby.send(Message.REQ_COMMENT_LIST,{
+      post_id: displayCommentData
+     })
+     this.postLobby.onMessage(Message.RES_COMMENT_LIST, (message) => {
+       console.log(message)
+       callback(message)
+     })
+     
+   }
+   async modifyComment(modifyCommentData: IComment,callback:(modifyCommentSuccess:boolean)=>void) {
+    console.log('modifyComment')
+    console.log(modifyCommentData)
+    this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+     //서버로 로그인 데이터 전송
+     this.postLobby.send(Message.REQ_COMMENT_MODIFY,{
+       id: modifyCommentData.id,
+       content: modifyCommentData.content
+     })
+     this.postLobby.onMessage(Message.RES_COMMENT_MODIFY, (message) => {
+       console.log(message)
+       callback(message)
+     })
+     
+   }
+  async modifyPost(modifyPostData: IPost,callback:(registerSuccess:boolean)=>void) {
+    console.log('modifyPost')
+    console.log(modifyPostData)
+    this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+     //서버로 로그인 데이터 전송
+     this.postLobby.send(Message.REQ_POSTS_MODIFY,{
+       title: modifyPostData.title,
+       content: modifyPostData.content,
+       id: modifyPostData.isNoti,
+     })
+     this.postLobby.onMessage(Message.RES_POSTS_MODIFY, (message) => {
+       console.log(message)
+       callback(message)
+     })
+     
+   }
+  async deletePost(deleteData: number,callback:(deleteSuccess:boolean)=>void) {
+    console.log('deletePost')
+    console.log(deleteData)
+    this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+     //서버로 로그인 데이터 전송
+     this.postLobby.send(Message.REQ_POSTS_DELETE,{
+       postId: deleteData
+     })
+     this.postLobby.onMessage(Message.RES_POSTS_DELETE, (message) => {
+       console.log(message)
+       callback(message)
+     })
+     
+   }
+   async deleteComment(deleteCommentData: number,callback:(deleteSuccess:boolean)=>void) {
+    console.log('deletePost')
+    console.log(deleteCommentData)
+    this.postLobby = await this.client.joinOrCreate(RoomType.POSTLOBBY)
+     //서버로 로그인 데이터 전송
+     this.postLobby.send(Message.REQ_COMMENT_DELETE,{
+       commentId: deleteCommentData
+     })
+     this.postLobby.onMessage(Message.RES_COMMENT_DELETE, (message) => {
+       console.log(message)
+       callback(message)
+     })
+     
+   }
+   async getLectureVideoList(userData: ILectureVideo,callback:(lectureVideoList:any)=>void) {
+    
+    console.log('getLectureVideoList')
+    
+    console.log(userData)
+    this.lectureVideoLobby = await this.client.joinOrCreate(RoomType.LECTUREVIDEOLOBBY)
+    
+    this.lectureVideoLobby.send(Message.SEND_LECTURE_VIDEO_LIST_REQUEST,{
+      id: userData.memberId,
+    })
+    this.lectureVideoLobby.onMessage(Message.SEND_LECTURE_VIDEO_LIST_RESPONSE, (message) => {
+      callback(message)
+    })
+  }
+  async isPro(userData: ILectureVideo,callback:(lectureVideoList:any)=>void) {
+    console.log('isPro')
+    this.lectureVideoLobby = await this.client.joinOrCreate(RoomType.LECTUREVIDEOLOBBY)
+    this.lectureVideoLobby.send(Message.SEND_ISPRO_REQUEST,{
+      id: userData.memberId,
+    })
+    this.lectureVideoLobby.onMessage(Message.SEND_ISPRO_RESPONSE, (message)=>{
+      callback(message)
+    })
+  }
+  async uploadLectureVideo(lectureVideo: ILectureVideo, callback:(lectureVideoList:any)=>void){
+    console.log('uploadVideo')
+    this.lectureVideoLobby = await this.client.joinOrCreate(RoomType.LECTUREVIDEOLOBBY)
+    this.lectureVideoLobby.send(Message.SEND_REGI_LECTURE_VIDEO_REQUEST,{
+      lecture_id: lectureVideo.lectureId,
+      lecture_video: lectureVideo.video,
+      lecture_video_contents: lectureVideo.content,
+      lecture_video_title: lectureVideo.title,
+    })
+    this.lectureVideoLobby.onMessage(Message.SEND_REGI_LECTURE_VIDEO_RESPONSE, (message)=>{
+      callback(message);
+    })
+  }
+  async getLectureList(userData: ILectureVideo,callback:(lectureVideoList:any)=>void) {
+    console.log('getLectureList')
+    console.log(userData)
+    this.lectureVideoLobby = await this.client.joinOrCreate(RoomType.LECTUREVIDEOLOBBY)
+    
+    this.lectureVideoLobby.send(Message.SEND_LECTURE_LIST_REQUEST,{
+      id: userData.memberId,
+    })
+    this.lectureVideoLobby.onMessage(Message.SEND_LECTURE_LIST_RESPONSE, (message) => {
+      callback(message)
+    })
+  }
+  async deleteLectureVideo(lectureVideo: ILectureVideo,callback:(result:boolean)=>void) {
+    console.log('deleteLectureVideo')
+    this.lectureVideoLobby = await this.client.joinOrCreate(RoomType.LECTUREVIDEOLOBBY)
+    console.log(lectureVideo)
+    this.lectureVideoLobby.send(Message.SEND_DELETE_VIDEO_REQUEST,{
+      lecture_id: lectureVideo,
+    })
+    this.lectureVideoLobby.onMessage(Message.SEND_DELETE_VIDEO_RESPONSE, (message)=>{
+      callback(message)
+    })
+  }
+  async updateLectureVideo(lectureVideo: ILectureVideo, callback:(lectureVideoList:any)=>void){
+    console.log('updateVideo')
+    this.lectureVideoLobby = await this.client.joinOrCreate(RoomType.LECTUREVIDEOLOBBY)
+    console.log(lectureVideo)
+    this.lectureVideoLobby.send(Message.SEND_UPDATE_VIDEO_REQUEST,{
+      id: lectureVideo.lectureId,
+      lecture_video: lectureVideo.video,
+      lecture_video_contents: lectureVideo.content,
+      lecture_video_title: lectureVideo.title,
+    })
+    this.lectureVideoLobby.onMessage(Message.SEND_UPDATE_VIDEO_RESPONSE, (message)=>{
+      callback(message);
+    })
+  }
+  async getOneLectureVideo(lectureVideo: ILectureVideo, callback:(lectureVideoList:any)=>void){
+    console.log('getOneLectureVideo')
+    this.lectureVideoLobby = await this.client.joinOrCreate(RoomType.LECTUREVIDEOLOBBY)
+    this.lectureVideoLobby.send(Message.SEND_ONE_LECTURE_VIDEO_REQUEST, {
+      id: lectureVideo.lectureId,
+    })
+    this.lectureVideoLobby.onMessage(Message.SEND_ONE_LECTURE_VIDEO_RESPONSE, (message)=>{
+      callback(message);
+    })
+  }
+  async getLectureTitle(lectureVideo: ILectureVideo, callback:(lecture: any)=> void){
+    console.log('getLectureTitle')
+    this.lectureVideoLobby.send(Message.SEND_LECTURE_TITLE_REQUEST, {
+      lectureId: lectureVideo,
+    })
+    this.lectureVideoLobby.onMessage(Message.SEND_LECTURE_TITLE_RESPONSE, (message)=>{
+      callback(message);
+    })
+  }
   // square initialize
   squareInit() {
-    phaserEvents.on(Event.MY_PLAYER_NAME_CHANGE, this.updatePlayerName, this)
-    phaserEvents.on(Event.MY_PLAYER_TEXTURE_CHANGE, this.updatePlayer, this)
-    phaserEvents.on(Event.PLAYER_DISCONNECTED, this.playerStreamDisconnect, this)
+    
     if (!this.room) return
     if (!this.square) return
 
-    this.room.leave()
-
+    this.room?.leave()
+    
+    
     // new instance added to the players MapSchema
     this.square.state.players.onAdd = (player: IPlayer, key: string) => {
       if (key === this.mySessionId) return
@@ -231,20 +588,24 @@ export default class Network {
       const computerState = store.getState().computer
       computerState.shareScreenManager?.onUserLeft(clientId)
     })
+
+  
+    phaserEvents.on(Event.MY_PLAYER_NAME_CHANGE, this.updatePlayerName, this)
+    phaserEvents.on(Event.MY_PLAYER_TEXTURE_CHANGE, this.updatePlayer, this)
+    phaserEvents.on(Event.PLAYER_DISCONNECTED, this.playerStreamDisconnect, this)
   }
 
   // set up all network listeners before the game starts
   initialize() {
-    phaserEvents.on(Event.MY_PLAYER_NAME_CHANGE, this.updatePlayerName, this)
-    phaserEvents.on(Event.MY_PLAYER_TEXTURE_CHANGE, this.updatePlayer, this)
-    phaserEvents.on(Event.PLAYER_DISCONNECTED, this.playerStreamDisconnect, this)
     if (!this.room) return
 
-    this.lobby.leave()
-    this.mySessionId = this.room.sessionId
-    store.dispatch(setSessionId(this.room.sessionId))
-    this.webRTC = new WebRTC(this.mySessionId, this)
+    this.lobby?.leave()
+    this.square?.leave()
 
+    // this.mySessionId = this.room.sessionId
+    // store.dispatch(setSessionId(this.room.sessionId))
+    // this.webRTC = new WebRTC(this.mySessionId, this)
+   
     // new instance added to the players MapSchema
     this.room.state.players.onAdd = (player: IPlayer, key: string) => {
       if (key === this.mySessionId) return
@@ -258,7 +619,6 @@ export default class Network {
           // when a new player finished setting up player name
           if (field === 'name' && value !== '') {
             phaserEvents.emit(Event.PLAYER_JOINED, player, key)
-            console.log('game init')
             store.dispatch(setPlayerNameMap({ id: key, name: value }))
             store.dispatch(pushPlayerJoinedMessage(value))
           }
@@ -328,10 +688,14 @@ export default class Network {
       const computerState = store.getState().computer
       computerState.shareScreenManager?.onUserLeft(clientId)
     })
+    phaserEvents.on(Event.MY_PLAYER_NAME_CHANGE, this.updatePlayerName, this)
+    phaserEvents.on(Event.MY_PLAYER_TEXTURE_CHANGE, this.updatePlayer, this)
+    phaserEvents.on(Event.PLAYER_DISCONNECTED, this.playerStreamDisconnect, this)
   }
 
   // method to register event listener and call back function when a item user added
   onChatMessageAdded(callback: (playerId: string, content: string) => void, context?: any) {
+    console.log('chat')
     phaserEvents.on(Event.UPDATE_DIALOG_BUBBLE, callback, context)
   }
 
@@ -437,6 +801,7 @@ export default class Network {
   }
 
   connectToWhiteboard(id: string) {
+    console.log(this.scene)
     if (this.scene === 'game')
       this.room?.send(Message.CONNECT_TO_WHITEBOARD, { whiteboardId: id })
     else if (this.scene === 'square')

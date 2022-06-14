@@ -7,7 +7,7 @@ import AlertTitle from '@mui/material/AlertTitle'
 import ArrowRightIcon from '@mui/icons-material/ArrowRight'
 import phaserGame from '../PhaserGame'
 import Square from '../scenes/Square'
-import { useAppSelector } from '../hooks'
+import { useAppDispatch, useAppSelector } from '../hooks'
 import Game from '../scenes/Game'
 import { phaserEvents } from '../events/EventCenter'
 
@@ -20,16 +20,33 @@ const Title = styled.h1`
 export default function SquareDialog() {
   const userName = useAppSelector((state) => state.logInfo.userName)
   const userAvatar = useAppSelector((state) => state.logInfo.userAvatar)
+  const location = useAppSelector((state)=> state.chat.location)
+  const userlocation = useAppSelector((state)=> state.chat.location)
+  const dispatch = useAppDispatch()
+  const [content, setContent] = useState('')
 
-  const square = phaserGame.scene.keys.square as Square
+
   const game = phaserGame.scene.keys.game as Game
-  
+  const square = phaserGame.scene.keys.square as Square
   let [ alert, alertSet ] = useState(true);
   useEffect(()=>{
-    square.myPlayer.setPlayerName(userName)
-    square.myPlayer.setPlayerTexture(userAvatar)
-    square.network.readyToConnect()
-    
+    if(location){
+      if(location==='square'){
+        square.myPlayer.setPlayerName(userName)
+        square.myPlayer.setPlayerTexture(userAvatar)
+        square.network.readyToConnect()
+        square.network.videoConnected()
+        setContent('금오광장')
+      }
+      else if(location==='digital'){
+        game.myPlayer.setPlayerName(userName)
+        game.myPlayer.setPlayerTexture(userAvatar)
+        game.network.readyToConnect()
+        game.network.videoConnected()
+        setContent('디지털관')
+      }
+    }
+  
     let timer = setTimeout(()=>{ 
       alertSet(false)
       
@@ -39,7 +56,7 @@ export default function SquareDialog() {
   
   return (
     <div>
-    {alert === true  ? <Title> 금오광장 </Title> : null }
+    {alert === true  ? <Title> {content} </Title> : null }
     </div>
     
     

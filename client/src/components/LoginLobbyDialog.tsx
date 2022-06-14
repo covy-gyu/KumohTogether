@@ -13,7 +13,8 @@ import { InputAdornment, LinearProgress, TextField } from '@mui/material'
 import { IUser } from '../../../types/Users'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import store from '../stores'
-import { setUserId } from '../stores/LogInfoStore'
+import { setLoggedSuccess, setRegistermode,setSuser,setAdminMode} from '../stores/UserStore'
+import MemberRegister from './MemberRegister'
 
 const Backdrop = styled.div`
   position: absolute;
@@ -70,7 +71,6 @@ const ProgressBarWrapper = styled.div`
     color: #33ac96;
   }
 `
-
 export default function LoginLobbyDialog() {
   const dispatch = useAppDispatch()
   const loggedSuccesss = useAppSelector((state) => state.user.loggedSuccess)
@@ -86,7 +86,7 @@ export default function LoginLobbyDialog() {
     msg: '',
     code: 0,
   })
-
+  
   const handleChange = (prop: keyof IUser) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setValues({ ...values, [prop]: event.target.value })
   }
@@ -98,23 +98,39 @@ export default function LoginLobbyDialog() {
 
     if (isValidId === idFieldEmpty) setIdFieldEmpty(!idFieldEmpty)
     if (isValidPassword === pwFieldEmpty) setPwFieldEmpty(!pwFieldEmpty)
-
+    dispatch(setSuser(values.id))
+    
     if (isValidId && isValidPassword && lobbyJoined) {
+      dispatch(setLoggedSuccess(false))
       const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
- 
       const login = false
-      bootstrap.network.tryLogin(values, (login)=>{
+      
+      bootstrap.network.tryLogin(values, (identi,login)=>{
+        console.log(identi)
+        console.log(login)
         if (login) {
-          console.log('클라이언트: 로그인성공')
+          if(identi !=='관리자')
+          {
+          console.log('로그인성공')
           bootstrap.network
             .joinOrCreatePublic()
             .then(() => bootstrap.launchGame())
             .catch((error) => console.error(error))
-
-          bootstrap.logInfo?.setUserId(values.id)
+          }
+          else
+          {
+            dispatch(setAdminMode(true));
+          }
         }
       })
     }
+  }
+
+  const Register = async (event: React.FormEvent<HTMLFormElement>) => {
+    console.log('Register');
+   
+    store.dispatch(setRegistermode(true))
+      
   }
   return (
     <>
@@ -147,7 +163,7 @@ export default function LoginLobbyDialog() {
               variant="outlined"
               color="secondary"
               error={idFieldEmpty}
-              helperText={idFieldEmpty && '아이디가 필요합니다.'}
+              helperText={idFieldEmpty && 'ID가 필요합니다.'}
               onChange={handleChange('id')}
             />
             <TextField
@@ -175,11 +191,19 @@ export default function LoginLobbyDialog() {
               onChange={handleChange('password')}
             />
             <Button variant="contained" color="secondary" type="submit">
-              로그인
+              LogIn
             </Button>
           </Content>
         </Wrapper>
-        {!lobbyJoined && (
+        <Wrapper onSubmit={Register}>
+        <Content onSubmit={Register}>
+          <Button variant="contained" color="secondary" type="submit">
+              회원가입
+            </Button>
+            
+        </Content>
+        </Wrapper>
+{!lobbyJoined && (
           <ProgressBarWrapper>
             <h3> 서버 연결 중...</h3>
             <ProgressBar color="secondary" />

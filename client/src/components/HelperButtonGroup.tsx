@@ -205,7 +205,7 @@ export default function HelperButtonGroup() {
           </StyledFab>
         </Tooltip>
         {/* <Tooltip title="Follow Us on Twitter">
-          <StyledFab size="small" href="https://twitter.com/SkyOfficeApp" target="_blank">
+          <StyledFab size="small" href="https://twitter.com/KumohTogetherApp" target="_blank">
             <TwitterIcon />
           </StyledFab>
         </Tooltip> */}

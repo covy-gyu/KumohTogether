@@ -1,7 +1,7 @@
 {
-  "name": "skyoffice",
+  "name": "kumohtogether",
   "version": "1.0.0",
-  "description": "Server for SkyOffice",
+  "description": "Server for kumohtogether",
   "main": ".eslintrc.js",
   "scripts": {
     "start": "cd server && ts-node-dev --project tsconfig.server.json --respawn --transpile-only index.ts",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kevinshen56714/SkyOffice.git"
+    "url": "git+https://github.com/gozldwnd1eo/KumohTogether.git"
   },
   "keywords": [],
   "author": "kevinshen56714",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/kevinshen56714/SkyOffice/issues"
+    "url": "https://github.com/gozldwnd1eo/KumohTogether/issues"
   },
-  "homepage": "https://github.com/kevinshen56714/SkyOffice#readme",
+  "homepage": "https://github.com/gozldwnd1eo/KumohTogether#readme",
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
     "@types/cors": "^2.8.6",

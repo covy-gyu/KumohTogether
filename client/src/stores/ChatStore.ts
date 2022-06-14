@@ -15,6 +15,7 @@ export const chatSlice = createSlice({
     chatMessages: new Array<{ messageType: MessageType; chatMessage: IChatMessage }>(),
     focused: false,
     showChat: true,
+    location: 'digital',
   },
   reducers: {
     pushChatMessage: (state, action: PayloadAction<IChatMessage>) => {
@@ -29,7 +30,7 @@ export const chatSlice = createSlice({
         chatMessage: {
           createdAt: new Date().getTime(),
           author: action.payload,
-          content: 'joined the lobby',
+          content: 'joined the '+state.location,
         } as IChatMessage,
       })
     },
@@ -39,7 +40,7 @@ export const chatSlice = createSlice({
         chatMessage: {
           createdAt: new Date().getTime(),
           author: action.payload,
-          content: 'left the lobby',
+          content: 'left the '+state.location,
         } as IChatMessage,
       })
     },
@@ -51,6 +52,9 @@ export const chatSlice = createSlice({
     setShowChat: (state, action: PayloadAction<boolean>) => {
       state.showChat = action.payload
     },
+    setLocation: (state, action: PayloadAction<string>) => {
+      state.location = action.payload
+    },
   },
 })
 
@@ -60,6 +64,7 @@ export const {
   pushPlayerLeftMessage,
   setFocused,
   setShowChat,
+  setLocation,
 } = chatSlice.actions
 
 export default chatSlice.reducer

@@ -7,9 +7,12 @@ import { RoomType } from '../types/Rooms'
 
 // import socialRoutes from "@colyseus/social/express"
 
-import { SkyOffice } from './rooms/SkyOffice'
+import { Digital } from './rooms/Digital'
 import { Lobby } from './rooms/Lobby'
 import { Square } from './rooms/Square'
+import { RegisterLobby } from './rooms/RegisterLobby'
+import { PostLobby } from './rooms/PostLobby'
+import { LectureVideoListLobby } from './rooms/LectureVideoListLobby'
 
 const port = Number(process.env.PORT || 2567)
 const app = express()
@@ -31,7 +34,10 @@ gameServer.define(RoomType.LOBBY, Lobby, {
   msg: '',
   code: 0
 })
-gameServer.define(RoomType.PUBLIC, SkyOffice, {
+gameServer.define(RoomType.REGISTERLOBBY, RegisterLobby)
+gameServer.define(RoomType.POSTLOBBY, PostLobby)
+gameServer.define(RoomType.LECTUREVIDEOLOBBY, LectureVideoListLobby)
+gameServer.define(RoomType.PUBLIC, Digital, {
   name: 'Kumoh Square',
   description: '🚩 친구 만들거나 회의, 수업을 들어보세요 💙',
   password: null,
@@ -43,7 +49,7 @@ gameServer.define(RoomType.SQUARE, Square, {
   password: null,
   autoDispose: false,
 })
-gameServer.define(RoomType.CUSTOM, SkyOffice).enableRealtimeListing()
+gameServer.define(RoomType.CUSTOM, Digital).enableRealtimeListing()
 
 /**
  * Register @colyseus/social routes

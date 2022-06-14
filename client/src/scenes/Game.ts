@@ -7,7 +7,6 @@ import Item from '../items/Item'
 import Chair from '../items/Chair'
 import Computer from '../items/Computer'
 import Whiteboard from '../items/Whiteboard'
-import VendingMachine from '../items/VendingMachine'
 import '../characters/MyPlayer'
 import '../characters/OtherPlayer'
 import MyPlayer from '../characters/MyPlayer'
@@ -19,14 +18,18 @@ import { PlayerBehavior } from '../../../types/PlayerBehavior'
 import { ItemType } from '../../../types/Items'
 
 import store from '../stores'
-import { setFocused, setShowChat } from '../stores/ChatStore'
+import { setFocused, setLocation, setShowChat } from '../stores/ChatStore'
 import Door from '../items/Door'
 import LogInfo from '../services/LogInfo'
 import phaserGame from '../PhaserGame'
 import Square from './Square'
 import Bootstrap from './Bootstrap'
-import { openDoor } from '../stores/DoorStore'
+import { closeDoor, openSquare, setDoorLocation } from '../stores/DoorStore'
 import { phaserEvents } from '../events/EventCenter'
+import { setUserLocation } from '../stores/LogInfoStore'
+import RoomDoor from '../items/RoomDoor'
+import Personal from '../items/Personal'
+import Board from '../items/Board'
 
 export default class Game extends Phaser.Scene {
   network!: Network
@@ -40,8 +43,10 @@ export default class Game extends Phaser.Scene {
   private otherPlayerMap = new Map<string, OtherPlayer>()
   computerMap = new Map<string, Computer>()
   private whiteboardMap = new Map<string, Whiteboard>()
+  private personalMap = new Map<string, Personal>()
+
   logInfo?: LogInfo
-  private location = 'game'
+  private location = 'digital'
 
   constructor() {
     super('game')
@@ -69,8 +74,8 @@ export default class Game extends Phaser.Scene {
   enableKeys() {
     this.input.keyboard.enabled = true
   }
-  
-  create(data: { network: Network , logInfo: LogInfo}) {
+
+  create(data: { network: Network, logInfo: LogInfo }) {
     console.log('create game')
     if (!data.network) {
       throw new Error('server instance missing')
@@ -89,7 +94,6 @@ export default class Game extends Phaser.Scene {
     // debugDraw(groundLayer, this)
     // 캐릭터 생성
     // this.myPlayer = this.add.myPlayer(705, 500, 'adam', this.network.mySessionId)
-    console.log('game: player생성')
     this.myPlayer = this.add.myPlayer(705, 500, 'adam', this.network.mySessionId)
     this.playerSelector = new PlayerSelector(this, 0, 0, 16, 16)
 
@@ -128,12 +132,26 @@ export default class Game extends Phaser.Scene {
       this.whiteboardMap.set(id, item)
     })
 
-    // import vending machine objects from Tiled map to Phaser
-    const vendingMachines = this.physics.add.staticGroup({ classType: VendingMachine })
-    const vendingMachineLayer = this.map.getObjectLayer('VendingMachine')
-    vendingMachineLayer.objects.forEach((obj, i) => {
-      this.addObjectFromTiled(vendingMachines, obj, 'vendingmachines', 'vendingmachine')
+    const personal = this.physics.add.staticGroup({ classType: Personal })
+    const personalLayer = this.map.getObjectLayer('Personal')
+    personalLayer.objects.forEach((obj, i) => {
+      const item = this.addObjectFromTiled(
+        personal,
+        obj,
+        'personal',
+        'chair'
+      ) as Personal
+      const id = `${i}`
+      item.id = id
+      this.personalMap.set(id, item)
     })
+
+    // import vending machine objects from Tiled map to Phaser
+    // const vendingMachines = this.physics.add.staticGroup({ classType: VendingMachine })
+    // const vendingMachineLayer = this.map.getObjectLayer('RoomDoor')
+    // vendingMachineLayer.objects.forEach((obj, i) => {
+    //   this.addObjectFromTiled(vendingMachines, obj, 'vendingmachines', 'Generic')
+    // })
 
     // import door objects from Tiled map to Phaser
     const door = this.physics.add.staticGroup({ classType: Door })
@@ -141,7 +159,22 @@ export default class Game extends Phaser.Scene {
     doorLayer.objects.forEach((obj, i) => {
       this.addObjectFromTiled(door, obj, 'door', 'FloorAndGround')
     })
-    
+
+    // import door objects from Tiled map to Phaser
+    const roomDoor = this.physics.add.staticGroup({ classType: RoomDoor })
+    const rDoorLayer = this.map.getObjectLayer('RoomDoor')
+    rDoorLayer.objects.forEach((obj, i) => {
+      this.addObjectFromTiled(roomDoor, obj, 'roomDoor', 'Generic')
+    })
+
+
+
+    const board = this.physics.add.staticGroup({ classType: Board })
+    const boardLayer = this.map.getObjectLayer('Board')
+    boardLayer.objects.forEach((obj, i) => {
+      this.addObjectFromTiled(board, obj, 'board', 'Basement')
+    })
+
     // import other objects from Tiled map to Phaser
     this.addGroupFromTiled('Wall', 'tiles_wall', 'FloorAndGround', false)
     this.addGroupFromTiled('Objects', 'office', 'Modern_Office_Black_Shadow', false)
@@ -156,16 +189,16 @@ export default class Game extends Phaser.Scene {
     this.cameras.main.startFollow(this.myPlayer, true)
 
     this.physics.add.collider([this.myPlayer, this.myPlayer.playerContainer], groundLayer)
-    this.physics.add.collider([this.myPlayer, this.myPlayer.playerContainer], vendingMachines)
+    // this.physics.add.collider([this.myPlayer, this.myPlayer.playerContainer], roomDoor)
 
     this.physics.add.overlap(
       this.playerSelector,
-      [chairs, computers, whiteboards, vendingMachines],
+      [chairs, personal, computers, whiteboards, roomDoor, board],
       this.handleItemSelectorOverlap,
       undefined,
       this
     )
-    
+
 
     this.physics.add.overlap(
       this.myPlayer,
@@ -181,21 +214,21 @@ export default class Game extends Phaser.Scene {
       this.handleDoorOverlap,
       undefined,
       this
-    ) 
+    )
 
     // register network event listeners
     console.log('game: onPlayerJoined')
-    if(this.network.scene === 'game'){
-      this.network.onPlayerJoined(this.handlePlayerJoined, this)
-      this.network.onPlayerLeft(this.handlePlayerLeft, this)
-      this.network.onMyPlayerReady(this.handleMyPlayerReady, this)
-      this.network.onMyPlayerVideoConnected(this.handleMyVideoConnected, this)
-      this.network.onPlayerUpdated(this.handlePlayerUpdated, this)
-      this.network.onItemUserAdded(this.handleItemUserAdded, this)
-      this.network.onItemUserRemoved(this.handleItemUserRemoved, this)
-      this.network.onChatMessageAdded(this.handleChatMessageAdded, this)
-    }
-   
+    // if(this.network.scene === 'game'){
+    this.network.onPlayerJoined(this.handlePlayerJoined, this)
+    this.network.onPlayerLeft(this.handlePlayerLeft, this)
+    this.network.onMyPlayerReady(this.handleMyPlayerReady, this)
+    this.network.onMyPlayerVideoConnected(this.handleMyVideoConnected, this)
+    this.network.onPlayerUpdated(this.handlePlayerUpdated, this)
+    this.network.onItemUserAdded(this.handleItemUserAdded, this)
+    this.network.onItemUserRemoved(this.handleItemUserRemoved, this)
+    this.network.onChatMessageAdded(this.handleChatMessageAdded, this)
+    // }
+
   }
   private async handleDoorOverlap(playerSelector, selectionItem) {
     const currentItem = playerSelector.selectedItem as Item
@@ -214,25 +247,34 @@ export default class Game extends Phaser.Scene {
     //await selectionItem.changeScene(this.network)
     const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
     const square = phaserGame.scene.keys.square as Square
+
+    // phaserEvents.eventNames().forEach(e=>console.log(e))
     phaserEvents.shutdown()
 
     this.network.joinOrCreateSquare()
-    .then(() =>  this.scene.start('square',{
-      network: this.network,
-      logInfo: this.logInfo,
-     }))
-     .then(()=>{setTimeout(() => {
-      store.dispatch(openDoor())
-    }, 1000);})
-    .then(()=>{setTimeout(() => {
-      this.scene.stop()
-      
-    }, 1000);})
-    .catch((error) => console.error(error))
-    
+      .then(() => this.scene.start('square', {
+        network: this.network,
+        logInfo: this.logInfo,
+      }))
+      .then(() => {
+        setTimeout(() => {
+          store.dispatch(setDoorLocation('square'))
+          store.dispatch(setLocation('square'))
+          store.dispatch(setUserLocation('square'))
+          store.dispatch(openSquare())
+        }, 1000);
+      })
+      .then(() => {
+        setTimeout(() => {
+          store.dispatch(closeDoor())
+          this.scene.stop()
+
+        }, 1000);
+      })
+      .catch((error) => console.error(error))
+
     // phaserEvents.removeAllListeners()
-     
-  
+
     //this.network.onPlayerLeft(this.handlePlayerLeft, this)
   }
 
@@ -328,6 +370,10 @@ export default class Game extends Phaser.Scene {
     } else if (itemType === ItemType.WHITEBOARD) {
       const whiteboard = this.whiteboardMap.get(itemId)
       whiteboard?.addCurrentUser(playerId)
+    }
+    else if (itemType === ItemType.PERSONAL) {
+      const personal = this.personalMap.get(itemId)
+      personal?.addCurrentUser(playerId)
     }
   }
 

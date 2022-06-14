@@ -16,10 +16,16 @@ import { PlayerBehavior } from '../../../types/PlayerBehavior'
 import { ItemType } from '../../../types/Items'
 
 import store from '../stores'
-import { setFocused, setShowChat } from '../stores/ChatStore'
+import { setFocused, setLocation, setShowChat } from '../stores/ChatStore'
 import LogInfo from '../services/LogInfo'
-import { logInfoSlice } from '../stores/LogInfoStore'
+import { logInfoSlice, setUserLocation } from '../stores/LogInfoStore'
 import { phaserEvents } from '../events/EventCenter'
+import { closeDoor, openDigital, openSquare, setDoorLocation } from '../stores/DoorStore'
+import phaserGame from '../PhaserGame'
+import Bootstrap from './Bootstrap'
+import Door from '../items/Door'
+import Computer from '../items/Computer'
+import Whiteboard from '../items/Whiteboard'
 
 export default class Square extends Phaser.Scene {
   network!: Network
@@ -31,6 +37,8 @@ export default class Square extends Phaser.Scene {
   private playerSelector!: Phaser.GameObjects.Zone
   private otherPlayers!: Phaser.Physics.Arcade.Group
   private otherPlayerMap = new Map<string, OtherPlayer>()
+  computerMap = new Map<string, Computer>()
+  private whiteboardMap = new Map<string, Whiteboard>()
   logInfo!: LogInfo
   private location = 'square'
 
@@ -70,24 +78,30 @@ export default class Square extends Phaser.Scene {
     }
     createCharacterAnims(this.anims)
 
-    this.map = this.make.tilemap({ key: 'tilemap' })
+    this.map = this.make.tilemap({ key: 'tileSquare' })
     const FloorAndGround = this.map.addTilesetImage('FloorAndGround', 'tiles_wall')
+    const Deco = this.map.addTilesetImage('Deco', 'deco')
+    
+    const underLayer = this.map.createLayer('Under',FloorAndGround)
 
-    const groundLayer = this.map.createLayer('Ground', FloorAndGround)
+    const groundLayer = this.map.createLayer('Ground', [FloorAndGround,Deco])
     groundLayer.setCollisionByProperty({ collides: true })
 
+
     // debugDraw(groundLayer, this)
-    this.myPlayer = this.add.myPlayer(705, 500, "lucy", this.network.mySessionId)
+    this.myPlayer = this.add.myPlayer(705, 500, 'adam', this.network.mySessionId)
     this.playerSelector = new PlayerSelector(this, 0, 0, 16, 16)
+
+    const door = this.physics.add.staticGroup({ classType: Door })
+    const doorLayer = this.map.getObjectLayer('Door')
+    doorLayer.objects.forEach((obj, i) => {
+      this.addObjectFromTiled(door, obj, 'door', 'FloorAndGround')
+    })
 
     // import other objects from Tiled map to Phaser
     this.addGroupFromTiled('Wall', 'tiles_wall', 'FloorAndGround', false)
-    this.addGroupFromTiled('Door', 'tiles_door', 'FloorAndGround', false)
-    this.addGroupFromTiled('Objects', 'office', 'Modern_Office_Black_Shadow', false)
-    this.addGroupFromTiled('ObjectsOnCollide', 'office', 'Modern_Office_Black_Shadow', true)
-    this.addGroupFromTiled('GenericObjects', 'generic', 'Generic', false)
-    this.addGroupFromTiled('GenericObjectsOnCollide', 'generic', 'Generic', true)
-    this.addGroupFromTiled('Basement', 'basement', 'Basement', true)
+    this.addGroupFromTiled('Objects', 'deco', 'Deco', false)
+    this.addGroupFromTiled('ObjectsOnCollide', 'deco', 'Deco', true)
 
     this.otherPlayers = this.physics.add.group({ classType: OtherPlayer })
 
@@ -104,6 +118,13 @@ export default class Square extends Phaser.Scene {
       this
     )
 
+    this.physics.add.overlap(
+      this.myPlayer,
+      [door],
+      this.handleDoorOverlap,
+      undefined,
+      this
+    ) 
    // phaserEvents.removeAllListeners()
     // register network event listeners
     console.log('square: onPlayerJoined')
@@ -113,11 +134,12 @@ export default class Square extends Phaser.Scene {
       this.network.onMyPlayerReady(this.handleMyPlayerReady, this)
       this.network.onMyPlayerVideoConnected(this.handleMyVideoConnected, this)
       this.network.onPlayerUpdated(this.handlePlayerUpdated, this)
+      this.network.onItemUserAdded(this.handleItemUserAdded, this)
+      this.network.onItemUserRemoved(this.handleItemUserRemoved, this)
       this.network.onChatMessageAdded(this.handleChatMessageAdded, this)
    // }
   }
-
-  private handleItemSelectorOverlap(playerSelector, selectionItem) {
+  private async handleDoorOverlap(playerSelector, selectionItem) {
     const currentItem = playerSelector.selectedItem as Item
     // currentItem is undefined if nothing was perviously selected
     if (currentItem) {
@@ -128,10 +150,30 @@ export default class Square extends Phaser.Scene {
       // if selection changes, clear pervious dialog
       if (this.myPlayer.playerBehavior !== PlayerBehavior.SITTING) currentItem.clearDialogBox()
     }
-
     // set selected item and set up new dialog
     playerSelector.selectedItem = selectionItem
-    selectionItem.onOverlapDialog()
+    const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
+
+    
+    phaserEvents.shutdown()
+    
+    this.network.joinOrCreatePublic()
+    .then(() => this.scene.start('game',{
+      network: this.network,
+      logInfo: this.logInfo,
+     }))
+     .then(()=>{setTimeout(() => {
+      store.dispatch(setDoorLocation('digital'))
+      store.dispatch(setLocation('digital'))
+      store.dispatch(setUserLocation('digital'))
+      store.dispatch(openDigital())
+    }, 1000);})
+    .then(()=>{setTimeout(() => {
+      store.dispatch(closeDoor())
+       this.scene.stop()
+    }, 1000);})
+    .catch((error) => console.error(error))
+    // phaserEvents.removeAllListeners()
   }
 
   private addObjectFromTiled(
@@ -200,6 +242,26 @@ export default class Square extends Phaser.Scene {
 
   private handlePlayersOverlap(myPlayer, otherPlayer) {
     otherPlayer.makeCall(myPlayer, this.network?.webRTC)
+  }
+
+  private handleItemUserAdded(playerId: string, itemId: string, itemType: ItemType) {
+    if (itemType === ItemType.COMPUTER) {
+      const computer = this.computerMap.get(itemId)
+      computer?.addCurrentUser(playerId)
+    } else if (itemType === ItemType.WHITEBOARD) {
+      const whiteboard = this.whiteboardMap.get(itemId)
+      whiteboard?.addCurrentUser(playerId)
+    }
+  }
+
+  private handleItemUserRemoved(playerId: string, itemId: string, itemType: ItemType) {
+    if (itemType === ItemType.COMPUTER) {
+      const computer = this.computerMap.get(itemId)
+      computer?.removeCurrentUser(playerId)
+    } else if (itemType === ItemType.WHITEBOARD) {
+      const whiteboard = this.whiteboardMap.get(itemId)
+      whiteboard?.removeCurrentUser(playerId)
+    }
   }
 
   private handleChatMessageAdded(playerId: string, content: string) {

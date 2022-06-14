@@ -29,11 +29,22 @@ export default class Bootstrap extends Phaser.Scene {
     this.load.image('sun_moon', 'assets/background/sun_moon.png')
 
     this.load.tilemapTiledJSON('tilemap', 'assets/map/map.json')
+    this.load.tilemapTiledJSON('tileSquare','assets/map/square.json')
+    this.load.tilemapTiledJSON('tileClass','assets/map/Class.json')
+    this.load.tilemapTiledJSON('tileConfer','assets/map/conference.json')
     this.load.spritesheet('tiles_wall', 'assets/map/FloorAndGround.png', {
       frameWidth: 32,
       frameHeight: 32,
     })
     this.load.spritesheet('door', 'assets/map/FloorAndGround.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+    })
+    this.load.spritesheet('personal', 'assets/items/chair.png', {
+      frameWidth: 32,
+      frameHeight: 64,
+    })
+    this.load.spritesheet('board', 'assets/items/Basement.png', {
       frameWidth: 32,
       frameHeight: 32,
     })
@@ -57,7 +68,15 @@ export default class Bootstrap extends Phaser.Scene {
       frameWidth: 32,
       frameHeight: 32,
     })
+    this.load.spritesheet('deco', 'assets/items/Deco.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+    })
     this.load.spritesheet('basement', 'assets/items/Basement.png', {
+      frameWidth: 32,
+      frameHeight: 32,
+    })
+    this.load.spritesheet('roomDoor', 'assets/items/Generic.png', {
       frameWidth: 32,
       frameHeight: 32,
     })
@@ -97,7 +116,6 @@ export default class Bootstrap extends Phaser.Scene {
   }
 
   launchGame() {
-    this.network.webRTC?.checkPreviousPermission()
     this.scene.start('game', {
       network: this.network,
       logInfo: this.logInfo,
@@ -108,6 +126,20 @@ export default class Bootstrap extends Phaser.Scene {
   launchSquare(){
     //룸타입검사해서 해당 씬에 맞게 출력되도록 하기
     this.scene.start('square',{
+     network: this.network,
+     logInfo: this.logInfo,
+    })
+  }
+  launchClass(){
+    //룸타입검사해서 해당 씬에 맞게 출력되도록 하기
+    this.scene.start('classRoom',{
+     network: this.network,
+     logInfo: this.logInfo,
+    })
+  }
+  launchConfer(){
+    //룸타입검사해서 해당 씬에 맞게 출력되도록 하기
+    this.scene.start('conference',{
      network: this.network,
      logInfo: this.logInfo,
     })

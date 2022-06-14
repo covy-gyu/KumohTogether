@@ -8,6 +8,7 @@ import { sanitizeId } from '../util'
 interface ComputerState {
   computerDialogOpen: boolean
   computerId: null | string
+  url:any|null;
   myStream: null | MediaStream
   peerStreams: Map<
     string,
@@ -22,6 +23,7 @@ interface ComputerState {
 const initialState: ComputerState = {
   computerDialogOpen: false,
   computerId: null,
+  url:null,
   myStream: null,
   peerStreams: new Map(),
   shareScreenManager: null,
@@ -60,6 +62,8 @@ export const computerSlice = createSlice({
     },
     setMyStream: (state, action: PayloadAction<null | MediaStream>) => {
       state.myStream = action.payload
+    }, setUrl: (state, action: PayloadAction<null|any>) => {
+      state.url = action.payload
     },
     addVideoStream: (
       state,
@@ -82,6 +86,7 @@ export const {
   setMyStream,
   addVideoStream,
   removeVideoStream,
+  setUrl,
 } = computerSlice.actions
 
 export default computerSlice.reducer

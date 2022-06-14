@@ -1,7 +1,7 @@
 import { ItemType } from '../../../types/Items'
 import Item from './Item'
 import store from '../stores'
-import { openDoor } from '../stores/DoorStore'
+import { openDigital, openSquare } from '../stores/DoorStore'
 import Network from '../services/Network'
 import phaserGame from '../PhaserGame'
 import Bootstrap from '../scenes/Bootstrap'

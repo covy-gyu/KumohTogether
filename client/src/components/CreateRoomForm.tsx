@@ -8,10 +8,18 @@ import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 
 import { IRoomData } from '../../../types/Rooms'
-import { useAppSelector } from '../hooks'
+import { useAppDispatch, useAppSelector } from '../hooks'
 
 import phaserGame from '../PhaserGame'
 import Bootstrap from '../scenes/Bootstrap'
+import Checkbox from '@mui/material/Checkbox'
+import { setIsClass } from '../stores/RoomStore'
+import { closeDoor, openClass, openConfer, openSquare, setDoorLocation } from '../stores/DoorStore'
+import { setLocation } from '../stores/ChatStore'
+import { setUserLocation } from '../stores/LogInfoStore'
+import Game from '../scenes/Game'
+import ClassRoom from '../scenes/ClassRoom'
+import Conference from '../scenes/Conference'
 
 const CreateRoomFormWrapper = styled.form`
   display: flex;
@@ -31,6 +39,14 @@ export const CreateRoomForm = () => {
   const [nameFieldEmpty, setNameFieldEmpty] = useState(false)
   const [descriptionFieldEmpty, setDescriptionFieldEmpty] = useState(false)
   const lobbyJoined = useAppSelector((state) => state.room.lobbyJoined)
+  const [checked, setChecked] = React.useState(true);
+  const dispatch = useAppDispatch()
+  const userName = useAppSelector((state) => state.logInfo.userName)
+  const userAvatar = useAppSelector((state) => state.logInfo.userAvatar)
+
+  const handleCheckChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setChecked(event.target.checked);
+  };
 
   const handleChange = (prop: keyof IRoomData) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setValues({ ...values, [prop]: event.target.value })
@@ -48,10 +64,53 @@ export const CreateRoomForm = () => {
     // create custom room if name and description are not empty
     if (isValidName && isValidDescription && lobbyJoined) {
       const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
-      bootstrap.network
+      const game = phaserGame.scene.keys.game as Game
+      const classRoom = phaserGame.scene.keys.classRoom as ClassRoom
+      const conference = phaserGame.scene.keys.conference as Conference
+      if(checked){
+        bootstrap.network
         .createCustom(values)
-        .then(() => bootstrap.launchGame())
+        .then(() => bootstrap.launchClass())
+        .then(()=>{setTimeout(() => {
+          dispatch(setDoorLocation('class'))
+          dispatch(setLocation('class'))
+          dispatch(setUserLocation('class'))
+        }, 1000);})
+        .then(()=>{setTimeout(() => {
+          classRoom.myPlayer.setPlayerName(userName)
+          classRoom.myPlayer.setPlayerTexture(userAvatar)
+          classRoom.network.readyToConnect()
+          classRoom.network.videoConnected()
+          // dispatch(openClass())
+        }, 1000);})
+        .then(()=>{setTimeout(() => {
+          dispatch(closeDoor())
+           game.scene.stop()
+        }, 1000);})
         .catch((error) => console.error(error))
+      }
+      else{
+        bootstrap.network
+        .createCustom(values)
+        .then(() => conference.scene.start('classRoom',{
+          network: bootstrap.network,
+          logInfo: bootstrap.logInfo,
+         }))
+        .then(()=>{setTimeout(() => {
+          conference.myPlayer.setPlayerName(userName)
+          conference.myPlayer.setPlayerTexture(userAvatar)
+          conference.network.readyToConnect()
+          conference.network.videoConnected()
+          // dispatch(openConfer())
+        }, 1000);})
+        .then(()=>{setTimeout(() => {
+          // dispatch(closeDoor())/
+           game.scene.stop()
+    
+        }, 1000);})
+        .catch((error) => console.error(error))
+      }
+      
     }
   }
 
@@ -96,6 +155,12 @@ export const CreateRoomForm = () => {
             </InputAdornment>
           ),
         }}
+      />
+      <TextField label='수업방'/>
+        <Checkbox
+        checked={checked}
+        onChange={handleCheckChange}
+        inputProps={{ 'aria-label': '수업 방' }}
       />
       <Button variant="contained" color="secondary" type="submit">
         만들기

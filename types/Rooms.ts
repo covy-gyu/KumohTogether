@@ -3,7 +3,10 @@ export enum RoomType {
   LOBBY = 'lobby',
   PUBLIC = 'public',
   CUSTOM = 'custom',
-  SQUARE = 'square'
+  SQUARE = 'square',
+  REGISTERLOBBY = 'registerlobby',
+  LECTUREVIDEOLOBBY = 'lectureVideoLobby',
+  POSTLOBBY = 'postlobby',
 }
 
 export interface IRoomData {

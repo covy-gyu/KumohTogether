@@ -13,11 +13,16 @@ export function getInitialBackgroundMode() {
 export const userSlice = createSlice({
   name: 'user',
   initialState: {
+    userId:-1,
+    suser:'',
     backgroundMode: getInitialBackgroundMode(),
     sessionId: '',
     videoConnected: false,
     loggedIn: false,
     loggedSuccess: false,
+    registerMode: false,
+    adminMode: false,
+    adminModiMode: false,
     playerNameMap: new Map<string, string>(),
     loginInfoMap: new Map<string, string>(),
   },
@@ -30,6 +35,9 @@ export const userSlice = createSlice({
       const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
       bootstrap.changeBackgroundMode(newMode)
     },
+    setSuser: (state, action: PayloadAction<string>) => {
+      state.suser = action.payload
+    },
     setSessionId: (state, action: PayloadAction<string>) => {
       state.sessionId = action.payload
     },
@@ -39,8 +47,20 @@ export const userSlice = createSlice({
     setLoggedIn: (state, action: PayloadAction<boolean>) => {
       state.loggedIn = action.payload
     },
+    setRegistermode: (state, action: PayloadAction<boolean>) => {
+      state.registerMode = action.payload
+    },
     setLoggedSuccess: (state, action: PayloadAction<boolean>) => {
       state.loggedSuccess = action.payload
+    },
+    setUserId: (state, action: PayloadAction<number>) => {
+      state.userId = action.payload
+    },
+    setAdminMode: (state, action: PayloadAction<boolean>) => {
+      state.adminMode = action.payload
+    },
+    setAdminModiMode: (state, action: PayloadAction<boolean>) => {
+      state.adminModiMode = action.payload
     },
     setPlayerNameMap: (state, action: PayloadAction<{ id: string; name: string }>) => {
       state.playerNameMap.set(sanitizeId(action.payload.id), action.payload.name)
@@ -59,6 +79,11 @@ export const {
   setPlayerNameMap,
   removePlayerNameMap,
   setLoggedSuccess,
+  setRegistermode,
+  setSuser,
+  setAdminMode,
+  setUserId,
+  setAdminModiMode,
 } = userSlice.actions
 
 export default userSlice.reducer

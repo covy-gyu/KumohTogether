@@ -17,11 +17,15 @@ import Alert from '@mui/material/Alert'
 import Avatar from '@mui/material/Avatar'
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt'
 import LockIcon from '@mui/icons-material/Lock'
-import { useAppSelector } from '../hooks'
+import { useAppDispatch, useAppSelector } from '../hooks'
 import { getAvatarString, getColorByString } from '../util'
 
 import phaserGame from '../PhaserGame'
 import Bootstrap from '../scenes/Bootstrap'
+import { closeDoor, openClass, setDoorLocation } from '../stores/DoorStore'
+import Game from '../scenes/Game'
+import { setLocation } from '../stores/ChatStore'
+import { setUserLocation } from '../stores/LogInfoStore'
 
 const MessageText = styled.p`
   margin: 10px;
@@ -91,13 +95,26 @@ export const CustomRoomTable = () => {
   const [passwordFieldEmpty, setPasswordFieldEmpty] = useState(false)
   const lobbyJoined = useAppSelector((state) => state.room.lobbyJoined)
   const availableRooms = useAppSelector((state) => state.room.availableRooms)
+  const dispatch = useAppDispatch()
+
 
   const handleJoinClick = (roomId: string, password: string | null) => {
     if (!lobbyJoined) return
     const bootstrap = phaserGame.scene.keys.bootstrap as Bootstrap
+    const game = phaserGame.scene.keys.game as Game
     bootstrap.network
       .joinCustomById(roomId, password)
-      .then(() => bootstrap.launchGame())
+      .then(() => bootstrap.launchClass())
+      .then(()=>{setTimeout(() => {
+        dispatch(setDoorLocation('class'))
+        dispatch(setLocation('class'))
+        dispatch(setUserLocation('class'))
+        dispatch(openClass())
+      }, 1000);})
+      .then(()=>{setTimeout(() => {
+        dispatch(closeDoor())
+         game.scene.stop()
+      }, 1000);})
       .catch((error) => {
         console.error(error)
         if (password) setShowPasswordError(true)

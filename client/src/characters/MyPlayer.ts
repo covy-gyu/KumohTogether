@@ -14,6 +14,10 @@ import { pushPlayerJoinedMessage } from '../stores/ChatStore'
 import { ItemType } from '../../../types/Items'
 import VendingMachine from '../items/VendingMachine'
 import Door from '../items/Door'
+import RoomDoor from '../items/RoomDoor'
+import Private from '../items/Personal'
+import Personal from '../items/Personal'
+import Board from '../items/Board'
 
 export default class MyPlayer extends Player {
   private playContainerBody: Phaser.Physics.Arcade.Body
@@ -59,13 +63,6 @@ export default class MyPlayer extends Player {
 
     const item = playerSelector.selectedItem
 
-    // if(item?.itemType === ItemType.DOOR){
-    //   const door = item as Door
-    //   console.log('touch')
-    //   door.changeScene(network)
-      
-    // }
-
     if (Phaser.Input.Keyboard.JustDown(keyR)) {
       switch (item?.itemType) {
         case ItemType.COMPUTER:
@@ -76,11 +73,18 @@ export default class MyPlayer extends Player {
           const whiteboard = item as Whiteboard
           whiteboard.openDialog(network)
           break
-        case ItemType.VENDINGMACHINE:
-          // hacky and hard-coded, but leaving it as is for now
-          const vendingmachine = item as VendingMachine
-          vendingmachine.openDialog()
+        case ItemType.ROOMDOOR:
+          const roomDoor = item as RoomDoor
+          roomDoor.openDialog()
           break
+        case ItemType.PERSONAL:
+          const personal = item as Personal
+          personal.openDialog(network)
+          break
+        case ItemType.BOARD:
+          const board = item as Board
+          board.openDialog(network)
+          break 
       }
     }
 

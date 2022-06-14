@@ -11,6 +11,7 @@ export const logInfoSlice = createSlice({
     userId: '',
     userName: '',
     userAvatar: '',
+    userLocation: 'office',
    
   },
   reducers: {
@@ -22,6 +23,9 @@ export const logInfoSlice = createSlice({
     },
     setUserAvatar: (state, action: PayloadAction<string>) => {
       state.userAvatar = action.payload
+    },
+    setUserLocation: (state, action: PayloadAction<string>) => {
+      state.userLocation = action.payload
     },
     // setLoggedIn: (state, action: PayloadAction<boolean>) => {
     //   state.loggedIn = action.payload
@@ -42,6 +46,7 @@ export const {
   setUserId,
   setUserName,
   setUserAvatar,
+  setUserLocation,
   
 } = logInfoSlice.actions
 
